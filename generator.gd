@@ -14,8 +14,8 @@ func generate(rng, width, height, desired_room_count):
                 rng.randi_range(1, height - 32)
             ), 
             Vector2(
-                rng.randi_range(10, 30),
-                rng.randi_range(10, 30)
+                rng.randi_range(5, 15),
+                rng.randi_range(5, 15)
             ))
         
         var is_room_valid = true

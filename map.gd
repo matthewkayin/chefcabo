@@ -5,14 +5,14 @@ onready var tomato_scene = preload("res://enemies/tomato/tomato.tscn")
 
 var rng = RandomNumberGenerator.new()
 
-const MAP_WIDTH = 100
-const MAP_HEIGHT = 100
+const MAP_WIDTH = 40
+const MAP_HEIGHT = 40
 var tile_open = []
 
 func _ready():
     rng.randomize()
 
-    var room_count = 8
+    var room_count = 3
     var generator = Generator.new()
     generator.generate(rng, MAP_WIDTH, MAP_HEIGHT, room_count)
 
@@ -53,12 +53,12 @@ func _ready():
 
     used_coords.append(player.coordinate)
 
-    for _i in range(0, 10):
+    for _i in range(0, 1):
         var tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count)]
         var tomato_spawn_coordinate = null
-        while tomato_spawn_coordinate != null and not used_coords.has(tomato_spawn_coordinate):
+        while tomato_spawn_coordinate == null or used_coords.has(tomato_spawn_coordinate):
             tomato_spawn_coordinate = Vector2(rng.randi_range(tomato_spawn_room.position.x + 1, tomato_spawn_room.position.x + tomato_spawn_room.size.x - 1),
-                                              rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
+                                            rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
         var tomato = tomato_scene.instance()
         tomato.coordinate = tomato_spawn_coordinate
         get_parent().call_deferred("add_child", tomato)

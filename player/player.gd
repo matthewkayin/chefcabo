@@ -15,13 +15,13 @@ var health = max_health
 var power = 3
 
 func _ready():
-    position = coordinate * 16
+    position = coordinate * 32
     tilemap.reserve_tile(coordinate)
 
     camera.limit_left = int(tilemap.position.x)
     camera.limit_top = int(tilemap.position.y)
-    camera.limit_right = int(tilemap.position.x + (tilemap.get_width() * 16))
-    camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 16))
+    camera.limit_right = int(tilemap.position.x + (tilemap.get_width() * 32))
+    camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 32))
 
     tween.connect("tween_all_completed", self, "_on_interpolate_finished")
 
@@ -92,8 +92,8 @@ func execute_turn():
     turn = null
 
 func interpolate_turn():
-    position += position.direction_to(coordinate * 16)
-    tween.interpolate_property(self, "position", position, coordinate * 16, 0.2)
+    position += position.direction_to(coordinate * 32)
+    tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
     tween.start()
 
 func take_damage(amount: int):

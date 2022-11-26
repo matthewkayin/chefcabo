@@ -10,7 +10,7 @@ func _ready():
 
 func spawn(at_coordinate: Vector2, with_item: int):
     coordinate = at_coordinate
-    position = coordinate * 16
+    position = coordinate * 32
     item = with_item
     sprite.texture = Items.DATA[item].texture
 

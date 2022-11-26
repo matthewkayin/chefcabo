@@ -5,6 +5,7 @@ onready var inventory = get_node("../ui/inventory")
 
 onready var camera = $camera
 onready var tween = $tween
+onready var sprite = $sprite
 
 var turn = null
 var is_turn_ready = true

@@ -1,6 +1,6 @@
 extends Node2D
 
-onready var tilemap = get_parent().get_node("tilemap")
+onready var tilemap = get_node("../tilemap")
 onready var inventory = get_node("../ui/inventory")
 
 onready var camera = $camera
@@ -15,15 +15,16 @@ var health = max_health
 var power = 3
 
 func _ready():
-    coordinate = position / 16
+    position = coordinate * 16
     tilemap.reserve_tile(coordinate)
 
-    camera.limit_left = tilemap.position.x
-    camera.limit_top = tilemap.position.y
-    camera.limit_right = tilemap.position.x + (tilemap.get_width() * 16)
-    camera.limit_bottom = tilemap.position.y + (tilemap.get_height() * 16)
+    camera.limit_left = int(tilemap.position.x)
+    camera.limit_top = int(tilemap.position.y)
+    camera.limit_right = int(tilemap.position.x + (tilemap.get_width() * 16))
+    camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 16))
 
     tween.connect("tween_all_completed", self, "_on_interpolate_finished")
+
 
 func is_everyone_done_interpolating():
     if tween.is_active():
@@ -42,11 +43,15 @@ func _process(_delta):
         return
     if inventory.is_open():
         return
+    check_for_inputs()
+    print(tween.is_active())
+
+func check_for_inputs():
     if Input.is_action_just_pressed("menu"):
         inventory.open(true)
         return
     for name in Direction.NAMES:
-        if Input.is_action_just_pressed(name):
+        if Input.is_action_pressed(name):
             turn = {
                 "action": "move",
                 "direction": Direction.VECTORS[name]
@@ -88,6 +93,7 @@ func execute_turn():
     turn = null
 
 func interpolate_turn():
+    position += position.direction_to(coordinate * 16)
     tween.interpolate_property(self, "position", position, coordinate * 16, 0.2)
     tween.start()
 

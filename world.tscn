@@ -1,9 +1,7 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://tiles.png" type="Texture" id=1]
-[ext_resource path="res://player/player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://map.gd" type="Script" id=3]
-[ext_resource path="res://enemies/tomato/tomato.tscn" type="PackedScene" id=4]
 [ext_resource path="res://ui/inventory/inventory.tscn" type="PackedScene" id=5]
 
 [sub_resource type="ConvexPolygonShape2D" id=2]
@@ -67,18 +65,6 @@ tile_set = SubResource( 1 )
 cell_size = Vector2( 16, 16 )
 format = 1
 script = ExtResource( 3 )
-
-[node name="player" parent="." instance=ExtResource( 2 )]
-position = Vector2( 32, 32 )
-
-[node name="tomato" parent="." instance=ExtResource( 4 )]
-position = Vector2( 96, 64 )
-
-[node name="tomato2" parent="." instance=ExtResource( 4 )]
-position = Vector2( 96, 96 )
-
-[node name="tomato3" parent="." instance=ExtResource( 4 )]
-position = Vector2( 192, 64 )
 
 [node name="ui" type="CanvasLayer" parent="."]
 

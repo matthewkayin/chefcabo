@@ -1,5 +1,7 @@
 extends TileMap
 
+onready var player_scene = preload("res://player/player.tscn")
+
 var rng = RandomNumberGenerator.new()
 
 const MAP_WIDTH = 100
@@ -7,21 +9,44 @@ const MAP_HEIGHT = 100
 var tile_open = []
 
 func _ready():
+    rng.randomize()
+
+    var room_count = 8
+    var generator = Generator.new()
+    generator.generate(rng, MAP_WIDTH, MAP_HEIGHT, room_count)
+
     for x in range(0, MAP_WIDTH):
         tile_open.append([])
         for _y in range(0, MAP_HEIGHT):
             tile_open[x].append(true)
 
-func get_point_on_rect_wall(rect: Rect2):
-    var which_wall = rng.randi_range(0, 3)
-    if which_wall == 0:
-        return Vector2(rng.randi_range(rect.position.x + 1, rect.position.x + rect.size.x - 2), rect.position.y)
-    elif which_wall == 1:
-        return Vector2(rect.position.x + rect.size.x - 1, rng.randi_range(rect.position.y + 1, rect.position.y + rect.size.y - 2))
-    elif which_wall == 2:
-        return Vector2(rng.randi_range(rect.position.x + 1, rect.position.x + rect.size.x - 2), rect.position.y + rect.size.y - 1)
-    else:
-        return Vector2(rect.position.x, rng.randi_range(rect.position.y + 1, rect.position.y + rect.size.y - 2))
+    for room in generator.rooms:
+        for y in range(room.position.y, room.position.y + room.size.y):
+            for x in range(room.position.x, room.position.x + room.size.x):
+                set_cell(x, y, 0)
+
+    var directions = []
+    for x in [-1, 0, 1]:
+        for y in [-1, 0, 1]:
+            if x == 0 and y == 0:
+                continue
+            directions.append(Vector2(x, y))
+
+    for x in range(0, MAP_WIDTH):
+        for y in range(0, MAP_HEIGHT):
+            var current = Vector2(x, y)
+            if get_cellv(current) == 0:
+                for direction in directions:
+                    if get_cellv(current + direction) == -1:
+                        set_cellv(current + direction, 2)
+
+    var player_spawn_room = generator.rooms[rng.randi_range(0, room_count)]
+    var player_spawn_coordinate = player_spawn_room.position + (player_spawn_room.size / 2)
+    player_spawn_coordinate.x = int(player_spawn_coordinate.x)
+    player_spawn_coordinate.y = int(player_spawn_coordinate.y)
+    var player = player_scene.instance()
+    player.coordinate = player_spawn_coordinate
+    get_parent().call_deferred("add_child", player)
 
 func astar_point_index(point_position: Vector2):
     return (point_position.x * MAP_HEIGHT) + point_position.y

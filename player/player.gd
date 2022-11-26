@@ -5,10 +5,12 @@ onready var inventory = get_node("../ui/inventory")
 
 onready var camera = $camera
 onready var tween = $tween
+onready var sprite = $sprite
 
 var turn = null
 var is_turn_ready = true
 var coordinate: Vector2 = Vector2.ZERO
+var facing_direction: Vector2 = Vector2.ZERO
 
 var max_health = 100
 var health = max_health
@@ -24,7 +26,6 @@ func _ready():
     camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 32))
 
     tween.connect("tween_all_completed", self, "_on_interpolate_finished")
-
 
 func is_everyone_done_interpolating():
     if tween.is_active():
@@ -44,6 +45,7 @@ func _process(_delta):
     if inventory.is_open():
         return
     check_for_inputs()
+    update_sprite()
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
@@ -75,6 +77,7 @@ func begin_turn():
 func execute_turn():
     if turn.action == "move":
         var future_coord = coordinate + turn.direction
+        facing_direction = coordinate.direction_to(future_coord)
         if tilemap.is_tile_free(future_coord):
             tilemap.free_tile(coordinate)
             tilemap.reserve_tile(future_coord)
@@ -90,6 +93,11 @@ func execute_turn():
                     enemy.take_damage(power)
                     break
     turn = null
+
+func update_sprite():
+    for name in Direction.NAMES:
+        if facing_direction == Direction.VECTORS[name]:
+            sprite.play(name)
 
 func interpolate_turn():
     position += position.direction_to(coordinate * 32)

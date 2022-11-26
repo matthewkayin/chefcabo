@@ -7,6 +7,7 @@ func _ready():
     pass
 
 func generate(rng, width, height, desired_room_count):
+    var failed_attempts = 0
     while rooms.size() != desired_room_count:
         var room_candidate = Rect2(
             Vector2(
@@ -25,10 +26,16 @@ func generate(rng, width, height, desired_room_count):
         
         if is_room_valid:
             rooms.append(room_candidate)
+            failed_attempts = 0
+        else:
+            failed_attempts += 1
+            if failed_attempts == 5:
+                rooms = []
 
     for i in range(0, desired_room_count): 
         var num_hallways = 0
-        for j in range(0, desired_room_count):
+        while num_hallways != 2:
+            var j = rng.randi_range(0, desired_room_count)
             if i == j:
                 continue
 
@@ -91,8 +98,6 @@ func generate(rng, width, height, desired_room_count):
                     rooms.append(create_hall(hall_part_1_end, hall_part_3_start, true))
                     rooms.append(create_hall(hall_part_3_start, end, false))
             num_hallways += 1
-            if num_hallways == 2:
-                break
 
 func create_hall(start, end, horizontal):
     var top_left = Vector2(min(start.x, end.x), min(start.y, end.y))

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/pot.png-eaa4078c100c38bc39549877c3352d35.stex"
+path="res://.import/tomato_idle.png-9dad5b5ff6a3de4019e0a6ecf9a8355c.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://ui/inventory/pot.png"
-dest_files=[ "res://.import/pot.png-eaa4078c100c38bc39549877c3352d35.stex" ]
+source_file="res://enemies/tomato/tomato_idle.png"
+dest_files=[ "res://.import/tomato_idle.png-9dad5b5ff6a3de4019e0a6ecf9a8355c.stex" ]
 
 [params]
 
@@ -28,6 +28,7 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
+process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

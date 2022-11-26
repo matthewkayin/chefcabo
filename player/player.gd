@@ -44,10 +44,9 @@ func _process(_delta):
     if inventory.is_open():
         return
     check_for_inputs()
-    print(tween.is_active())
 
 func check_for_inputs():
-    if Input.is_action_just_pressed("menu"):
+    if Input.is_action_just_pressed("back"):
         inventory.open(true)
         return
     for name in Direction.NAMES:

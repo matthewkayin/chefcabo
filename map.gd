@@ -1,6 +1,7 @@
 extends TileMap
 
 onready var player_scene = preload("res://player/player.tscn")
+onready var tomato_scene = preload("res://enemies/tomato/tomato.tscn")
 
 var rng = RandomNumberGenerator.new()
 
@@ -40,6 +41,8 @@ func _ready():
                     if get_cellv(current + direction) == -1:
                         set_cellv(current + direction, 2)
 
+    var used_coords = []
+
     var player_spawn_room = generator.rooms[rng.randi_range(0, room_count)]
     var player_spawn_coordinate = player_spawn_room.position + (player_spawn_room.size / 2)
     player_spawn_coordinate.x = int(player_spawn_coordinate.x)
@@ -47,6 +50,18 @@ func _ready():
     var player = player_scene.instance()
     player.coordinate = player_spawn_coordinate
     get_parent().call_deferred("add_child", player)
+
+    used_coords.append(player.coordinate)
+
+    for _i in range(0, 10):
+        var tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count)]
+        var tomato_spawn_coordinate = null
+        while tomato_spawn_coordinate != null and not used_coords.has(tomato_spawn_coordinate):
+            tomato_spawn_coordinate = Vector2(rng.randi_range(tomato_spawn_room.position.x + 1, tomato_spawn_room.position.x + tomato_spawn_room.size.x - 1),
+                                              rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
+        var tomato = tomato_scene.instance()
+        tomato.coordinate = tomato_spawn_coordinate
+        get_parent().call_deferred("add_child", tomato)
 
 func astar_point_index(point_position: Vector2):
     return (point_position.x * MAP_HEIGHT) + point_position.y

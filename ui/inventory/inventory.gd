@@ -119,18 +119,18 @@ func _process(_delta):
         return
     if inventory.size() == 0:
         cursor.visible = false
-    if Input.is_action_just_pressed("menu"):
+    if Input.is_action_just_pressed("back") and ingredients.empty():
         close()
         return
     if in_cook_mode:
+        if Input.is_action_just_pressed("action") and ingredients.size() == 3:
+            cook_ingredients()
+            return
         if Input.is_action_just_pressed("action"):
             add_ingredient()
             return
         if Input.is_action_just_pressed("back"):
             remove_ingredient()
-            return
-        if Input.is_action_just_pressed("cook"):
-            cook_ingredients()
             return
     for direction in Direction.NAMES:
         if Input.is_action_just_pressed(direction):

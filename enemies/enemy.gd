@@ -16,7 +16,7 @@ var power = 3
 
 func _ready():
     add_to_group("enemies")
-    coordinate = position / 16
+    position = coordinate * 16
     tilemap.reserve_tile(coordinate)
 
     tween.connect("tween_all_completed", player, "_on_interpolate_finished")

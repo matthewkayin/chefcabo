@@ -11,7 +11,7 @@ const ITEM_STACK_SIZE = 16
 var cursor_index = Vector2.ZERO
 var inventory = []
 var ingredients = []
-var just_opened = false
+var just_opened_or_closed = false
 var in_cook_mode = false
 
 func _ready():
@@ -100,22 +100,27 @@ func refresh_sprites():
             ingredient_sprites[index].texture = Items.DATA[ingredients[index]].texture
 
 func open(cook_mode: bool = false):
+    if just_opened_or_closed:
+        just_opened_or_closed = false 
+        return
+
     cursor_index = Vector2.ZERO
     refresh_cursor()
     refresh_sprites()
     in_cook_mode = cook_mode
     pot.visible = in_cook_mode
     visible = true
-    just_opened = true
+    just_opened_or_closed = true
 
 func close():
     visible = false
+    just_opened_or_closed = true
 
 func _process(_delta):
     if not visible:
         return
-    if just_opened: 
-        just_opened = false
+    if just_opened_or_closed: 
+        just_opened_or_closed = false
         return
     if inventory.size() == 0:
         cursor.visible = false

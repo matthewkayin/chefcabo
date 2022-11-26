@@ -53,7 +53,7 @@ func _ready():
 
     used_coords.append(player.coordinate)
 
-    for _i in range(0, 1):
+    for _i in range(0, 3):
         var tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count)]
         var tomato_spawn_coordinate = null
         while tomato_spawn_coordinate == null or used_coords.has(tomato_spawn_coordinate):

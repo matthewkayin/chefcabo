@@ -35,7 +35,7 @@ func generate(rng, width, height, desired_room_count):
     for i in range(0, desired_room_count): 
         var num_hallways = 0
         while num_hallways != 2:
-            var j = rng.randi_range(0, desired_room_count)
+            var j = rng.randi_range(0, desired_room_count - 1)
             if i == j:
                 continue
 

@@ -1,6 +1,7 @@
 extends Node2D
 
 onready var tilemap = get_node("../tilemap")
+onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
 
 onready var camera = $camera
@@ -8,6 +9,7 @@ onready var tween = $tween
 onready var sprite = $sprite
 
 var turn = null
+var pending_thrown_item = null
 var is_turn_ready = true
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.ZERO
@@ -26,6 +28,10 @@ func _ready():
     camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 32))
 
     tween.connect("tween_all_completed", self, "_on_interpolate_finished")
+    inventory.connect("used_item", self, "_on_inventory_used_item")
+    highlight_map.connect("finished", self, "_on_highlight_map_finished")
+
+    inventory.add_item(Items.Item.TOMATO_SOUP)
 
 func is_everyone_done_interpolating():
     if tween.is_active():
@@ -39,10 +45,34 @@ func _on_interpolate_finished():
     if is_everyone_done_interpolating():
         is_turn_ready = true
 
+func _on_inventory_used_item(item):
+    if Items.DATA[item].type == Items.Type.POTION:
+        turn = {
+            "action": "item",
+            "effect": "heal"
+        }
+    elif Items.DATA[item].type == Items.Type.BOMB:
+        pending_thrown_item = item
+        highlight_map.open(coordinate, highlight_map.RangeType.CIRCLE)
+
+func _on_highlight_map_finished(selected_coordinate):
+    if selected_coordinate == null:
+        inventory.add_item(pending_thrown_item)
+        pending_thrown_item = null
+        return
+
+    turn = {
+        "action": "item",
+        "effect": "throw",
+        "at": selected_coordinate
+    }
+
 func _process(_delta):
     if not is_turn_ready:
         return
     if inventory.is_open():
+        return
+    if highlight_map.is_open():
         return
     check_for_inputs()
     update_sprite()
@@ -75,6 +105,8 @@ func begin_turn():
         enemy.interpolate_turn()
 
 func execute_turn():
+    if health == 0:
+        return
     if turn.action == "move":
         var future_coord = coordinate + turn.direction
         facing_direction = coordinate.direction_to(future_coord)
@@ -91,6 +123,14 @@ func execute_turn():
             for enemy in get_tree().get_nodes_in_group("enemies"):
                 if future_coord == enemy.coordinate:
                     enemy.take_damage(power)
+                    break
+    elif turn.action == "item":
+        if turn.effect == "heal":
+            health = min(max_health, health + 20)
+        elif turn.effect == "throw":
+            for enemy in get_tree().get_nodes_in_group("enemies"):
+                if enemy.coordinate == turn.at:
+                    enemy.take_damage(enemy.health)
                     break
     turn = null
 

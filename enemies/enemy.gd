@@ -36,6 +36,8 @@ func plan_turn():
     }
 
 func execute_turn():
+    if health == 0:
+        return
     if turn.action == "move":
         facing_direction = coordinate.direction_to(turn.coordinate)
         if turn.coordinate == player.coordinate:

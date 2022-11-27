@@ -72,8 +72,11 @@ func get_width():
 func get_height():
     return tile_open[0].size()
 
+func is_tile_blocked(coordinate: Vector2):
+    return get_cellv(coordinate) == 2
+
 func is_tile_free(coordinate: Vector2):
-    return tile_open[coordinate.x][coordinate.y] and get_cellv(coordinate) != 2
+    return tile_open[coordinate.x][coordinate.y] and not is_tile_blocked(coordinate)
 
 func reserve_tile(coordinate: Vector2):
     tile_open[coordinate.x][coordinate.y] = false

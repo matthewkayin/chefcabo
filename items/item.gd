@@ -5,14 +5,22 @@ enum Item {
     TOMATO_SOUP
 }
 
+enum Type {
+    INGREDIENT,
+    POTION,
+    BOMB
+}
+
 const DATA = {
     Item.TOMATO: {
         "name": "Tomato",
-        "texture": preload("res://items/deadmato.png")
+        "texture": preload("res://items/deadmato.png"),
+        "type": Type.INGREDIENT
     },
     Item.TOMATO_SOUP: {
         "name": "Tomato Soup",
-        "texture": preload("res://items/tomato_soup.png")
+        "texture": preload("res://items/tomato_soup.png"),
+        "type": Type.BOMB
     }
 }
 

@@ -1,5 +1,7 @@
 extends Control
 
+signal used_item(item)
+
 onready var cursor = $cursor
 onready var pot = $pot
 onready var sprites = []
@@ -117,10 +119,10 @@ func close():
     just_opened_or_closed = true
 
 func _process(_delta):
-    if not visible:
-        return
     if just_opened_or_closed: 
         just_opened_or_closed = false
+        return
+    if not visible:
         return
     if inventory.size() == 0:
         cursor.visible = false
@@ -132,7 +134,7 @@ func _process(_delta):
             cook_ingredients()
             return
         if Input.is_action_just_pressed("action"):
-            add_ingredient()
+            interact_with_item()
             return
         if Input.is_action_just_pressed("back"):
             remove_ingredient()
@@ -141,15 +143,24 @@ func _process(_delta):
         if Input.is_action_just_pressed(direction):
             navigate_cursor(Direction.VECTORS[direction])
 
-func add_ingredient():
-    if ingredients.size() == 3:
-        return
+func interact_with_item():
     var selection = inventory[cursor_index.y][cursor_index.x]
     if selection == null:
         return
-    remove_item(selection.item)
-    ingredients.append(selection.item)
-    refresh_sprites()
+
+    if Items.DATA[selection.item].type != Items.Type.INGREDIENT and ingredients.size() > 0:
+        return
+    if Items.DATA[selection.item].type == Items.Type.INGREDIENT and ingredients.size() == 3:
+        return
+
+    if Items.DATA[selection.item].type == Items.Type.INGREDIENT:
+        remove_item(selection.item)
+        ingredients.append(selection.item)
+        refresh_sprites()
+    else: 
+        remove_item(selection.item)
+        close()
+        emit_signal("used_item", selection.item)
 
 func remove_ingredient():
     if ingredients.size() == 0:

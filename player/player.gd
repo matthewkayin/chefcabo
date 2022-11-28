@@ -79,10 +79,15 @@ func _process(_delta):
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
-        inventory.open(true)
+        inventory.open(false)
         return
     for name in Direction.NAMES:
         if Input.is_action_pressed(name):
+            var future_coord = coordinate + Direction.VECTORS[name]
+            for kitchen in get_tree().get_nodes_in_group("kitchens"):
+                if future_coord == kitchen.coordinate:
+                    inventory.open(true)
+                    return
             turn = {
                 "action": "move",
                 "direction": Direction.VECTORS[name]

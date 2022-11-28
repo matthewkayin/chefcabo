@@ -134,33 +134,44 @@ func _process(_delta):
             cook_ingredients()
             return
         if Input.is_action_just_pressed("action"):
-            interact_with_item()
+            add_ingredient()
             return
         if Input.is_action_just_pressed("back"):
             remove_ingredient()
+            return
+    else:
+        if Input.is_action_just_pressed("action"):
+            use_item()
             return
     for direction in Direction.NAMES:
         if Input.is_action_just_pressed(direction):
             navigate_cursor(Direction.VECTORS[direction])
 
-func interact_with_item():
+func add_ingredient():
     var selection = inventory[cursor_index.y][cursor_index.x]
     if selection == null:
         return
-
     if Items.DATA[selection.item].type != Items.Type.INGREDIENT and ingredients.size() > 0:
         return
     if Items.DATA[selection.item].type == Items.Type.INGREDIENT and ingredients.size() == 3:
+        return
+    if Items.DATA[selection.item].type != Items.Type.INGREDIENT:
         return
 
     if Items.DATA[selection.item].type == Items.Type.INGREDIENT:
         remove_item(selection.item)
         ingredients.append(selection.item)
         refresh_sprites()
-    else: 
-        remove_item(selection.item)
-        close()
-        emit_signal("used_item", selection.item)
+
+func use_item():
+    var selection = inventory[cursor_index.y][cursor_index.x]
+    if selection == null:
+        return
+    if Items.DATA[selection.item].type == Items.Type.INGREDIENT:
+        return
+    remove_item(selection.item)
+    close()
+    emit_signal("used_item", selection.item)
 
 func remove_ingredient():
     if ingredients.size() == 0:

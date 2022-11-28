@@ -7,16 +7,32 @@ func _ready():
     pass
 
 func generate(rng, width, height, desired_room_count):
+    var room_bounds = [
+        {
+            "x": [5, 15],
+            "y": [5, 15]
+        },
+        {
+            "x": [3, 3],
+            "y": [3, 3]
+        }
+    ]
+
     var failed_attempts = 0
-    while rooms.size() != desired_room_count:
+    while rooms.size() != desired_room_count + 1:
+        var bounds
+        if rooms.size() < desired_room_count:
+            bounds = room_bounds[0]
+        else:
+            bounds = room_bounds[1]
         var room_candidate = Rect2(
             Vector2(
                 rng.randi_range(1, width - 32),
                 rng.randi_range(1, height - 32)
             ), 
             Vector2(
-                rng.randi_range(5, 15),
-                rng.randi_range(5, 15)
+                rng.randi_range(bounds.x[0], bounds.x[1]),
+                rng.randi_range(bounds.y[0], bounds.y[1])
             ))
         
         var is_room_valid = true
@@ -32,7 +48,7 @@ func generate(rng, width, height, desired_room_count):
             if failed_attempts == 5:
                 rooms = []
 
-    for i in range(0, desired_room_count): 
+    for i in range(0, desired_room_count + 1): 
         var num_hallways = 0
         while num_hallways != 2:
             var j = rng.randi_range(0, desired_room_count - 1)

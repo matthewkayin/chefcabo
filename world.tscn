@@ -95,6 +95,13 @@ cell_size = Vector2( 32, 32 )
 format = 1
 script = ExtResource( 6 )
 
+[node name="cursor" type="Sprite" parent="highlight_map"]
+visible = false
+texture = ExtResource( 4 )
+centered = false
+hframes = 3
+frame = 1
+
 [node name="ui" type="CanvasLayer" parent="."]
 
 [node name="inventory" parent="ui" instance=ExtResource( 5 )]

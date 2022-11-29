@@ -1,5 +1,7 @@
 extends Node2D
 
+signal turn_finished
+
 onready var tilemap = get_node("../tilemap")
 onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
@@ -27,7 +29,8 @@ func _ready():
     camera.limit_right = int(tilemap.position.x + (tilemap.get_width() * 32))
     camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 32))
 
-    tween.connect("tween_all_completed", self, "_on_interpolate_finished")
+    tween.connect("tween_all_completed", self, "_on_tween_finished")
+    sprite.connect("animation_finished", self, "_on_animation_finished")
     inventory.connect("used_item", self, "_on_inventory_used_item")
     highlight_map.connect("finished", self, "_on_highlight_map_finished")
 
@@ -74,8 +77,8 @@ func _process(_delta):
         return
     if highlight_map.is_open():
         return
-    check_for_inputs()
-    update_sprite()
+    if is_turn_ready:
+        check_for_inputs()
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
@@ -92,22 +95,15 @@ func check_for_inputs():
                 "action": "move",
                 "direction": Direction.VECTORS[name]
             }
-    if turn != null:
-        begin_turn()
 
-func begin_turn():
-    is_turn_ready = false
-
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.plan_turn()
-
-    execute_turn()
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.execute_turn()
-
-    interpolate_turn()
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.interpolate_turn()
+func is_turn_special():
+    if turn.action != "move":
+        return true
+    elif turn.action == "move":
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if coordinate + turn.direction == enemy.coordinate:
+                return true
+        return false
 
 func execute_turn():
     if health == 0:
@@ -120,14 +116,17 @@ func execute_turn():
             tilemap.reserve_tile(future_coord)
             coordinate = future_coord
 
-            for item in get_tree().get_nodes_in_group("items"):
-                if coordinate == item.coordinate:
-                    inventory.add_item(item.item)
-                    item.queue_free()
+            sprite.play(Direction.get_name(facing_direction))
+            position += position.direction_to(coordinate * 32)
+            tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
+            tween.start()
         else:
+            print("attacking at future coord ", future_coord)
             for enemy in get_tree().get_nodes_in_group("enemies"):
+                print("enemy coord ", enemy.coordinate)
                 if future_coord == enemy.coordinate:
-                    enemy.take_damage(power)
+                    print("playing attack animation")
+                    sprite.play("attack_" + Direction.get_name(facing_direction))
                     break
     elif turn.action == "item":
         if turn.effect == "heal":
@@ -137,17 +136,27 @@ func execute_turn():
                 if enemy.coordinate == turn.at:
                     enemy.take_damage(enemy.health)
                     break
+        turn = null
+        emit_signal("turn_finished")
+
+func _on_tween_finished():
+    for item in get_tree().get_nodes_in_group("items"):
+        if coordinate == item.coordinate:
+            inventory.add_item(item.item)
+            item.queue_free()
     turn = null
+    emit_signal("turn_finished")
 
-func update_sprite():
-    for name in Direction.NAMES:
-        if facing_direction == Direction.VECTORS[name]:
-            sprite.play(name)
-
-func interpolate_turn():
-    position += position.direction_to(coordinate * 32)
-    tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
-    tween.start()
+func _on_animation_finished():
+    if sprite.animation.begins_with("attack"):
+        var attack_coordinate = coordinate + facing_direction
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if attack_coordinate == enemy.coordinate:
+                enemy.take_damage(power)
+                break
+        sprite.play(Direction.get_name(facing_direction))
+        turn = null
+        emit_signal("turn_finished")
 
 func take_damage(amount: int):
     health -= amount

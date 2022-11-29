@@ -1,5 +1,7 @@
 extends Node2D
 
+signal turn_finished
+
 onready var item_drop_scene = preload("res://items/item.tscn")
 
 onready var player = get_parent().get_node("player")
@@ -21,10 +23,7 @@ func _ready():
     position = coordinate * 32
     tilemap.reserve_tile(coordinate)
 
-    tween.connect("tween_all_completed", player, "_on_interpolate_finished")
-
-func _process(_delta):
-    update_sprite()
+    tween.connect("tween_all_completed", self, "_on_tween_finished")
 
 func is_done_interpolating():
     return not tween.is_active()
@@ -35,27 +34,30 @@ func plan_turn():
         "coordinate": tilemap.get_astar_path(coordinate, player.coordinate)[1]
     }
 
+func is_turn_special():
+    return turn.coordinate == player.coordinate
+
 func execute_turn():
     if health == 0:
         return
     if turn.action == "move":
         facing_direction = coordinate.direction_to(turn.coordinate)
+        sprite.play(Direction.get_name(facing_direction))
         if turn.coordinate == player.coordinate:
             player.take_damage(3)
+            turn = null
+            emit_signal("turn_finished")
         else:
             if tilemap.is_tile_free(turn.coordinate):
                 tilemap.free_tile(coordinate)
                 tilemap.reserve_tile(turn.coordinate)
                 coordinate = turn.coordinate
+            tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
+            tween.start()
 
-func interpolate_turn():
-    tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
-    tween.start()
-
-func update_sprite():
-    for name in Direction.NAMES:
-        if facing_direction == Direction.VECTORS[name]:
-            sprite.play(name)
+func _on_tween_finished():
+    turn = null
+    emit_signal("turn_finished")
 
 func take_damage(amount: int):
     health -= amount

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tomato_soup.png-45bff1dd6181c52f2443ed2b0567f9c7.stex"
+path="res://.import/tomato_item.png-3ea69f2532b18b837e852719e4d263c1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://items/tomato_soup.png"
-dest_files=[ "res://.import/tomato_soup.png-45bff1dd6181c52f2443ed2b0567f9c7.stex" ]
+source_file="res://items/tomato_item.png"
+dest_files=[ "res://.import/tomato_item.png-3ea69f2532b18b837e852719e4d263c1.stex" ]
 
 [params]
 

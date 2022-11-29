@@ -7,3 +7,9 @@ const VECTORS = {
     "down": Vector2.DOWN,
     "left": Vector2.LEFT
 }
+
+static func get_name(direction: Vector2):
+    for name in NAMES:
+        if direction == VECTORS[name]:
+            return name
+    return ""

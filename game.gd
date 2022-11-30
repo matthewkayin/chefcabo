@@ -15,13 +15,14 @@ func play_turn():
 
     var actors = [weakref(player)]
     for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.plan_turn()
         actors.append(weakref(enemy))
 
     var special_actors = []
     var turn_targets = []
 
     for actor in actors:
+        if actor.get_ref().is_in_group("enemies"):
+            actor.get_ref().plan_turn()
         if turn_targets.has(actor.get_ref()):
             special_actors.append(actor)
             continue
@@ -33,9 +34,12 @@ func play_turn():
             actor.get_ref().execute_turn()
 
     while special_actors.size() != 0:
-        if special_actors[0].get_ref() == null:
+        if special_actors[0].get_ref() == null or special_actors[0].get_ref().health <= 0:
             special_actors.pop_front()
             continue
+        var turn_target = special_actors[0].get_ref().get_turn_target()
+        if turn_target != null and turn_target.is_executing_turn:
+            yield(turn_target, "turn_finished")
         special_actors[0].get_ref().execute_turn()
         if special_actors[0].get_ref().turn != null:
             yield(special_actors[0].get_ref(), "turn_finished")

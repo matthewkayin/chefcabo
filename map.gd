@@ -61,7 +61,7 @@ func _ready():
     get_parent().call_deferred("add_child", kitchen)
     used_coords.append(kitchen_spawn_coordinate)
 
-    for _i in range(0, 3):
+    for _i in range(0, 1):
         var tomato_spawn_room = null
         while tomato_spawn_room == null or tomato_spawn_room == player_spawn_room:
             tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count - 1)]

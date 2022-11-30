@@ -11,8 +11,10 @@ onready var inventory = get_node("../ui/inventory")
 onready var camera = $camera
 onready var tween = $tween
 onready var sprite = $sprite
+onready var timer = $timer
 
 var turn = null
+var is_executing_turn = false
 var pending_thrown_item = null
 var is_turn_ready = true
 var coordinate: Vector2 = Vector2.ZERO
@@ -109,6 +111,7 @@ func get_turn_target():
 func execute_turn():
     if health == 0:
         return
+    is_executing_turn = true
     if turn.action == "move":
         var future_coord = coordinate + turn.direction
         facing_direction = coordinate.direction_to(future_coord)
@@ -119,8 +122,6 @@ func execute_turn():
 
             sprite.play(Direction.get_name(facing_direction))
             position += position.direction_to(coordinate * 32)
-            # tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
-            # tween.start()
             should_interpolate_movement = true
         else:
             for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -129,8 +130,7 @@ func execute_turn():
                     return
 
             # If tile is blocked but no enemy exists
-            turn = null
-            emit_signal("turn_finished")
+            end_turn()
     elif turn.action == "item":
         if turn.effect == "heal":
             health = min(max_health, health + 20)
@@ -139,12 +139,15 @@ func execute_turn():
                 if enemy.coordinate == turn.at:
                     enemy.take_damage(enemy.health)
                     break
-        turn = null
-        emit_signal("turn_finished")
+        end_turn()
 
-func _on_tween_finished():
+func end_turn():
+    is_executing_turn = false
     turn = null
     emit_signal("turn_finished")
+
+func _on_tween_finished():
+    end_turn()
 
 func interpolate_movement():
     var future_pos = coordinate * 32
@@ -161,8 +164,7 @@ func interpolate_movement():
                 item.queue_free()
 
         # End turn
-        turn = null
-        emit_signal("turn_finished")
+        end_turn()
         should_interpolate_movement = false
 
 func _on_animation_finished():
@@ -181,10 +183,16 @@ func _on_animation_frame_changed():
 
                 yield(enemy.take_damage(power), "completed")
                 break
-        turn = null
-        emit_signal("turn_finished")
+        end_turn()
 
 func take_damage(amount: int):
     health -= amount
+    for _i in range(0, 3):
+        sprite.visible = false
+        timer.start(0.1)
+        yield(timer, "timeout")
+        sprite.visible = true
+        timer.start(0.1)
+        yield(timer, "timeout")
     if health <= 0:
         queue_free()

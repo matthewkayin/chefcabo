@@ -322,3 +322,5 @@ centered = false
 [node name="pot" type="Sprite" parent="."]
 position = Vector2( 176, 82 )
 texture = ExtResource( 5 )
+
+[node name="timer" type="Timer" parent="."]

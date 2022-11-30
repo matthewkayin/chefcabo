@@ -13,6 +13,7 @@ onready var sprite = $sprite
 var turn = null
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.DOWN
+var should_interpolate_movement = false
 
 var max_health = 10
 var health = max_health
@@ -25,6 +26,10 @@ func _ready():
 
     tween.connect("tween_all_completed", self, "_on_tween_finished")
 
+func _process(_delta):
+    if should_interpolate_movement:
+        interpolate_movement()
+
 func is_done_interpolating():
     return not tween.is_active()
 
@@ -34,8 +39,10 @@ func plan_turn():
         "coordinate": tilemap.get_astar_path(coordinate, player.coordinate)[1]
     }
 
-func is_turn_special():
-    return turn.coordinate == player.coordinate
+func get_turn_target():
+    if turn.coordinate == player.coordinate:
+        return player
+    return null
 
 func execute_turn():
     if health == 0:
@@ -52,8 +59,22 @@ func execute_turn():
                 tilemap.free_tile(coordinate)
                 tilemap.reserve_tile(turn.coordinate)
                 coordinate = turn.coordinate
-            tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
-            tween.start()
+                should_interpolate_movement = true
+            else:
+                turn = null
+                emit_signal("turn_finished")
+
+func interpolate_movement():
+    var future_pos = coordinate * 32
+    if position != future_pos:
+        if position.distance_to(future_pos) <= 2:
+            position = future_pos
+        else:
+            position += position.direction_to(future_pos) * 2
+    if position == future_pos:
+        turn = null
+        emit_signal("turn_finished")
+        should_interpolate_movement = false
 
 func _on_tween_finished():
     turn = null

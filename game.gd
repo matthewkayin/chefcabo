@@ -19,10 +19,16 @@ func play_turn():
         actors.append(weakref(enemy))
 
     var special_actors = []
+    var turn_targets = []
 
     for actor in actors:
-        if actor.get_ref().is_turn_special():
+        if turn_targets.has(actor.get_ref()):
             special_actors.append(actor)
+            continue
+        var turn_target = actor.get_ref().get_turn_target()
+        if turn_target != null:
+            special_actors.append(actor)
+            turn_targets.append(turn_target)
         else:
             actor.get_ref().execute_turn()
 

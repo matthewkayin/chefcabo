@@ -4,6 +4,8 @@ signal used_item(item)
 
 onready var cursor = $cursor
 onready var pot = $pot
+onready var timer = $timer
+
 onready var sprites = []
 onready var sprite_labels = []
 onready var ingredient_sprites = []
@@ -28,6 +30,14 @@ func _ready():
             inventory[i].append(null)
     for sprite in $ingredients.get_children():
         ingredient_sprites.append(sprite)
+
+    timer.connect("timeout", self, "_on_timer_timeout")
+
+func _on_timer_timeout():
+    var sprite = sprites[cursor_index.y][cursor_index.x]
+    if sprite.texture == null:
+        return
+    sprite.frame = (sprite.frame + 1) % sprite.hframes
 
 func is_full():
     var inventory_size = 0
@@ -65,6 +75,9 @@ func remove_item(item: int, remove_all: bool = false):
                     row[existing_item_index].quantity -= 1
 
 func navigate_cursor(direction: Vector2):
+    if sprites[cursor_index.y][cursor_index.x].texture != null:
+        sprites[cursor_index.y][cursor_index.x].frame = 0
+
     cursor_index += direction
     if cursor_index.x >= 4:
         cursor_index.x = 0
@@ -111,11 +124,13 @@ func open(cook_mode: bool = false):
     refresh_sprites()
     in_cook_mode = cook_mode
     pot.visible = in_cook_mode
+    timer.start(0.2)
     visible = true
     just_opened_or_closed = true
 
 func close():
     visible = false
+    timer.stop()
     just_opened_or_closed = true
 
 func _process(_delta):

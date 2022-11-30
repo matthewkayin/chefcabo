@@ -324,3 +324,6 @@ position = Vector2( 176, 82 )
 texture = ExtResource( 5 )
 
 [node name="timer" type="Timer" parent="."]
+
+[node name="transition_sprite" type="Sprite" parent="."]
+hframes = 8

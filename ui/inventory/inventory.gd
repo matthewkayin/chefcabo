@@ -2,9 +2,12 @@ extends Control
 
 signal used_item(item)
 
+onready var inventory_transition_scene = preload("res://ui/inventory/inventory_transition.tscn")
+
 onready var cursor = $cursor
 onready var pot = $pot
 onready var timer = $timer
+onready var transition_sprite = $transition_sprite
 
 onready var sprites = []
 onready var sprite_labels = []
@@ -15,6 +18,7 @@ const ITEM_STACK_SIZE = 16
 var cursor_index = Vector2.ZERO
 var inventory = []
 var ingredients = []
+var ingredient_count = 0
 var just_opened_or_closed = false
 var in_cook_mode = false
 
@@ -62,6 +66,18 @@ func add_item(item: int):
             if row[existing_item_index] == null:
                 row[existing_item_index] = { "item": item, "quantity": 1 }
                 return
+
+func get_add_item_index(item: int):
+    for y in range(0, inventory.size()):
+        for x in range(0, inventory[0].size()):
+            if inventory[y][x] == null:
+                continue
+            if inventory[y][x].item == item:
+                return Vector2(x, y)
+    for y in range(0, inventory.size()):
+        for x in range(0, inventory[0].size()):
+            if inventory[y][x] == null:
+                return Vector2(x, y)
 
 func remove_item(item: int, remove_all: bool = false):
     for row in inventory:
@@ -125,6 +141,7 @@ func open(cook_mode: bool = false):
     in_cook_mode = cook_mode
     pot.visible = in_cook_mode
     timer.start(0.2)
+    transition_sprite.texture = null
     visible = true
     just_opened_or_closed = true
 
@@ -141,14 +158,14 @@ func _process(_delta):
         return
     if inventory.size() == 0:
         cursor.visible = false
-    if Input.is_action_just_pressed("back") and ingredients.empty():
+    if Input.is_action_just_pressed("back") and ingredient_count == 0:
         close()
         return
     if in_cook_mode:
         if Input.is_action_just_pressed("action") and ingredients.size() == 3:
             cook_ingredients()
             return
-        if Input.is_action_just_pressed("action"):
+        if Input.is_action_just_pressed("action") and ingredient_count < 3:
             add_ingredient()
             return
         if Input.is_action_just_pressed("back"):
@@ -175,7 +192,11 @@ func add_ingredient():
 
     if Items.DATA[selection.item].type == Items.Type.INGREDIENT:
         remove_item(selection.item)
-        ingredients.append(selection.item)
+        ingredient_count += 1
+        var transition_instance = inventory_transition_scene.instance()
+        transition_instance.connect("finished", self, "_on_inventory_transition_finished")
+        add_child(transition_instance)
+        transition_instance.begin(selection.item, true, sprites[cursor_index.y][cursor_index.x], ingredient_sprites[ingredients.size()])
         refresh_sprites()
 
 func use_item():
@@ -191,8 +212,20 @@ func use_item():
 func remove_ingredient():
     if ingredients.size() == 0:
         return
-    add_item(ingredients[ingredients.size() - 1])
+    var add_item_index = get_add_item_index(ingredients[ingredients.size() - 1])
+    var transition_instance = inventory_transition_scene.instance()
+    transition_instance.connect("finished", self, "_on_inventory_transition_finished")
+    add_child(transition_instance)
+    transition_instance.begin(ingredients[ingredients.size() - 1], false, ingredient_sprites[ingredients.size() - 1], sprites[add_item_index.y][add_item_index.x])
     ingredients.remove(ingredients.size() - 1)
+    ingredient_count -= 1
+    refresh_sprites()
+
+func _on_inventory_transition_finished(item: int, adding: bool):
+    if adding:
+        ingredients.append(item)
+    else:
+        add_item(item)
     refresh_sprites()
 
 func dictionaries_are_equal(a, b):
@@ -216,4 +249,5 @@ func cook_ingredients():
             add_item(recipe.result)
             break
     ingredients = []
+    ingredient_count = 0
     refresh_sprites()

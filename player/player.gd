@@ -36,6 +36,9 @@ func _ready():
     highlight_map.connect("finished", self, "_on_highlight_map_finished")
 
     inventory.add_item(Items.Item.TOMATO_SOUP)
+    inventory.add_item(Items.Item.TOMATO)
+    inventory.add_item(Items.Item.TOMATO)
+    inventory.add_item(Items.Item.TOMATO)
 
 func _on_inventory_used_item(item):
     if Items.DATA[item].type == Items.Type.POTION:
@@ -72,7 +75,7 @@ func _process(_delta):
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
-        inventory.open(false)
+        inventory.open(true)
         return
     for name in Direction.NAMES:
         if Input.is_action_pressed(name):

@@ -1,5 +1,9 @@
 extends Node2D
 
+signal turn_finished
+
+onready var attack_effect_scene = preload("res://effects/effect_player_slash.tscn")
+
 onready var tilemap = get_node("../tilemap")
 onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
@@ -13,6 +17,7 @@ var pending_thrown_item = null
 var is_turn_ready = true
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.ZERO
+var should_interpolate_movement = false
 
 var max_health = 100
 var health = max_health
@@ -27,23 +32,16 @@ func _ready():
     camera.limit_right = int(tilemap.position.x + (tilemap.get_width() * 32))
     camera.limit_bottom = int(tilemap.position.y + (tilemap.get_height() * 32))
 
-    tween.connect("tween_all_completed", self, "_on_interpolate_finished")
+    tween.connect("tween_all_completed", self, "_on_tween_finished")
+    sprite.connect("animation_finished", self, "_on_animation_finished")
+    sprite.connect("frame_changed", self, "_on_animation_frame_changed")
     inventory.connect("used_item", self, "_on_inventory_used_item")
     highlight_map.connect("finished", self, "_on_highlight_map_finished")
 
     inventory.add_item(Items.Item.TOMATO_SOUP)
-
-func is_everyone_done_interpolating():
-    if tween.is_active():
-        return false
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        if not enemy.is_done_interpolating():
-            return false
-    return true
-
-func _on_interpolate_finished():
-    if is_everyone_done_interpolating():
-        is_turn_ready = true
+    inventory.add_item(Items.Item.TOMATO)
+    inventory.add_item(Items.Item.TOMATO)
+    inventory.add_item(Items.Item.TOMATO)
 
 func _on_inventory_used_item(item):
     if Items.DATA[item].type == Items.Type.POTION:
@@ -69,17 +67,18 @@ func _on_highlight_map_finished(selected_coordinate):
 
 func _process(_delta):
     if not is_turn_ready:
-        return
+        if should_interpolate_movement:
+            interpolate_movement()
     if inventory.is_open():
         return
     if highlight_map.is_open():
         return
-    check_for_inputs()
-    update_sprite()
+    if is_turn_ready:
+        check_for_inputs()
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
-        inventory.open(false)
+        inventory.open(true)
         return
     for name in Direction.NAMES:
         if Input.is_action_pressed(name):
@@ -92,22 +91,20 @@ func check_for_inputs():
                 "action": "move",
                 "direction": Direction.VECTORS[name]
             }
-    if turn != null:
-        begin_turn()
 
-func begin_turn():
-    is_turn_ready = false
-
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.plan_turn()
-
-    execute_turn()
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.execute_turn()
-
-    interpolate_turn()
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        enemy.interpolate_turn()
+func get_turn_target():
+    if turn.action == "item" and turn.effect == "heal":
+        return self
+    if turn.action == "item" and turn.effect == "throw":
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if turn.at == enemy.coordinate:
+                return enemy
+        return null
+    if turn.action == "move":
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if coordinate + turn.direction == enemy.coordinate:
+                return enemy
+        return null
 
 func execute_turn():
     if health == 0:
@@ -120,15 +117,20 @@ func execute_turn():
             tilemap.reserve_tile(future_coord)
             coordinate = future_coord
 
-            for item in get_tree().get_nodes_in_group("items"):
-                if coordinate == item.coordinate:
-                    inventory.add_item(item.item)
-                    item.queue_free()
+            sprite.play(Direction.get_name(facing_direction))
+            position += position.direction_to(coordinate * 32)
+            # tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
+            # tween.start()
+            should_interpolate_movement = true
         else:
             for enemy in get_tree().get_nodes_in_group("enemies"):
                 if future_coord == enemy.coordinate:
-                    enemy.take_damage(power)
-                    break
+                    sprite.play("attack_" + Direction.get_name(facing_direction))
+                    return
+
+            # If tile is blocked but no enemy exists
+            turn = null
+            emit_signal("turn_finished")
     elif turn.action == "item":
         if turn.effect == "heal":
             health = min(max_health, health + 20)
@@ -137,17 +139,50 @@ func execute_turn():
                 if enemy.coordinate == turn.at:
                     enemy.take_damage(enemy.health)
                     break
+        turn = null
+        emit_signal("turn_finished")
+
+func _on_tween_finished():
     turn = null
+    emit_signal("turn_finished")
 
-func update_sprite():
-    for name in Direction.NAMES:
-        if facing_direction == Direction.VECTORS[name]:
-            sprite.play(name)
+func interpolate_movement():
+    var future_pos = coordinate * 32
+    if position != future_pos:
+        if position.distance_to(future_pos) <= 2:
+            position = future_pos
+        else:
+            position += position.direction_to(future_pos) * 2
+    if position == future_pos:
+        # Check for item pickups
+        for item in get_tree().get_nodes_in_group("items"):
+            if coordinate == item.coordinate:
+                inventory.add_item(item.item)
+                item.queue_free()
 
-func interpolate_turn():
-    position += position.direction_to(coordinate * 32)
-    tween.interpolate_property(self, "position", position, coordinate * 32, 0.2)
-    tween.start()
+        # End turn
+        turn = null
+        emit_signal("turn_finished")
+        should_interpolate_movement = false
+
+func _on_animation_finished():
+    if sprite.animation.begins_with("attack"):
+        sprite.play(Direction.get_name(facing_direction))
+
+func _on_animation_frame_changed():
+    if sprite.animation.begins_with("attack") and sprite.frame == 2:
+        var attack_coordinate = coordinate + facing_direction
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if attack_coordinate == enemy.coordinate:
+                var effect = attack_effect_scene.instance()
+                get_parent().add_child(effect)
+                effect.spawn(attack_coordinate)
+                yield(effect, "finished")
+
+                yield(enemy.take_damage(power), "completed")
+                break
+        turn = null
+        emit_signal("turn_finished")
 
 func take_damage(amount: int):
     health -= amount

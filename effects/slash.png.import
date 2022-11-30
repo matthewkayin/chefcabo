@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tomato_soup.png-45bff1dd6181c52f2443ed2b0567f9c7.stex"
+path="res://.import/slash.png-6fe2e511dc0f98febf1eaf72198a536d.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://items/tomato_soup.png"
-dest_files=[ "res://.import/tomato_soup.png-45bff1dd6181c52f2443ed2b0567f9c7.stex" ]
+source_file="res://effects/slash.png"
+dest_files=[ "res://.import/slash.png-6fe2e511dc0f98febf1eaf72198a536d.stex" ]
 
 [params]
 
@@ -28,7 +28,6 @@ process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
-process/normal_map_invert_y=false
 stream=false
 size_limit=0
 detect_3d=true

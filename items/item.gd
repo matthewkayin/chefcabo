@@ -14,7 +14,7 @@ enum Type {
 const DATA = {
     Item.TOMATO: {
         "name": "Tomato",
-        "texture": preload("res://items/deadmato.png"),
+        "texture": preload("res://items/tomato_item.png"),
         "type": Type.INGREDIENT
     },
     Item.TOMATO_SOUP: {

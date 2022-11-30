@@ -6,4 +6,7 @@
 script = ExtResource( 1 )
 
 [node name="sprite" type="Sprite" parent="."]
-offset = Vector2( 8, 8 )
+offset = Vector2( 16, 16 )
+hframes = 8
+
+[node name="timer" type="Timer" parent="."]

@@ -2,6 +2,8 @@ extends Node2D
 
 signal turn_finished
 
+onready var attack_effect_scene = preload("res://effects/effect_player_slash.tscn")
+
 onready var tilemap = get_node("../tilemap")
 onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
@@ -32,6 +34,7 @@ func _ready():
 
     tween.connect("tween_all_completed", self, "_on_tween_finished")
     sprite.connect("animation_finished", self, "_on_animation_finished")
+    sprite.connect("frame_changed", self, "_on_animation_frame_changed")
     inventory.connect("used_item", self, "_on_inventory_used_item")
     highlight_map.connect("finished", self, "_on_highlight_map_finished")
 
@@ -164,12 +167,20 @@ func interpolate_movement():
 
 func _on_animation_finished():
     if sprite.animation.begins_with("attack"):
+        sprite.play(Direction.get_name(facing_direction))
+
+func _on_animation_frame_changed():
+    if sprite.animation.begins_with("attack") and sprite.frame == 2:
         var attack_coordinate = coordinate + facing_direction
         for enemy in get_tree().get_nodes_in_group("enemies"):
             if attack_coordinate == enemy.coordinate:
-                enemy.take_damage(power)
+                var effect = attack_effect_scene.instance()
+                get_parent().add_child(effect)
+                effect.spawn(attack_coordinate)
+                yield(effect, "finished")
+
+                yield(enemy.take_damage(power), "completed")
                 break
-        sprite.play(Direction.get_name(facing_direction))
         turn = null
         emit_signal("turn_finished")
 

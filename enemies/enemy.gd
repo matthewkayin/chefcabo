@@ -9,6 +9,7 @@ onready var tilemap = get_parent().get_node("tilemap")
 
 onready var tween = $tween
 onready var sprite = $sprite
+onready var timer = $timer
 
 var turn = null
 var coordinate: Vector2 = Vector2.ZERO
@@ -82,6 +83,13 @@ func _on_tween_finished():
 
 func take_damage(amount: int):
     health -= amount
+    for _i in range(0, 3):
+        sprite.visible = false
+        timer.start(0.1)
+        yield(timer, "timeout")
+        sprite.visible = true
+        timer.start(0.1)
+        yield(timer, "timeout")
     if health <= 0:
         var item_drop = item_drop_scene.instance()
         get_parent().add_child(item_drop)

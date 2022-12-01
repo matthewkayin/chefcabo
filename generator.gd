@@ -5,12 +5,14 @@ var rooms = []
 
 func _ready():
     pass
+    # var rng = RandomNumberGenerator.new()
+    # generate(rng, 60, 60, 3)
 
 func generate(rng, width, height, desired_room_count):
     var room_bounds = [
         {
-            "x": [5, 15],
-            "y": [5, 15]
+            "x": [4, 10],
+            "y": [4, 10]
         },
         {
             "x": [3, 3],
@@ -128,4 +130,4 @@ func create_hall(start, end, horizontal):
 
 func _draw():
     for room in rooms:
-        draw_rect(room, Color(1, 0, 0, 1))
+        draw_rect(Rect2(room.position * 4, room.size * 4), Color(1, 0, 0, 1))

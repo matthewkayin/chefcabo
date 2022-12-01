@@ -14,6 +14,7 @@ onready var timer = $timer
 
 var turn = null
 var is_executing_turn = false
+var is_charging = false
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.DOWN
 var should_interpolate_movement = false
@@ -40,7 +41,13 @@ func is_done_interpolating():
 
 func plan_turn():
     var dist_to_player = tilemap.get_manhatten_distance(coordinate, player.coordinate)
-    if dist_to_player <= 1:
+    if is_charging: 
+        turn = {
+            "action": "attack",
+            "coordinate": player.coordinate
+        }
+        is_charging = false
+    elif dist_to_player <= 1:
         var direction = Vector2.ZERO
         var dist = 0
         for possible_direction in Direction.VECTORS.values():
@@ -56,8 +63,7 @@ func plan_turn():
         }
     elif dist_to_player <= 3:
         turn = {
-            "action": "attack",
-            "coordinate": player.coordinate
+            "action": "charge"
         }
     else:
         turn = {
@@ -70,11 +76,28 @@ func get_turn_target():
         return player
     return null
 
+func face_toward_player():
+    if abs(player.coordinate.x - coordinate.x) >= abs(player.coordinate.y - coordinate.y):
+        if player.coordinate.x > coordinate.x:
+            facing_direction = Vector2.RIGHT
+        else:
+            facing_direction = Vector2.LEFT
+    else:
+        if player.coordinate.y > coordinate.y:
+            facing_direction = Vector2.DOWN
+        else:
+            facing_direction = Vector2.UP
+
 func execute_turn():
     if health == 0:
         return
     is_executing_turn = true
-    if turn.action == "move":
+    if turn.action == "charge":
+        face_toward_player()
+        sprite.play("charge_" + Direction.get_name(facing_direction))
+        is_charging = true
+        end_turn()
+    elif turn.action == "move":
         facing_direction = coordinate.direction_to(turn.coordinate)
         sprite.play(Direction.get_name(facing_direction))
         if tilemap.is_tile_free(turn.coordinate):
@@ -85,16 +108,6 @@ func execute_turn():
         else:
             end_turn()
     elif turn.action == "attack":
-        if abs(turn.coordinate.x - coordinate.x) >= abs(turn.coordinate.y - coordinate.y):
-            if turn.coordinate.x > coordinate.x:
-                facing_direction = Vector2.RIGHT
-            else:
-                facing_direction = Vector2.LEFT
-        else:
-            if turn.coordinate.y > coordinate.y:
-                facing_direction = Vector2.DOWN
-            else:
-                facing_direction = Vector2.UP
         sprite.play("attack_" + Direction.get_name(facing_direction))
 
 func end_turn():
@@ -121,7 +134,7 @@ func _on_animation_finished():
         sprite.play(Direction.get_name(facing_direction))
 
 func _on_animation_frame_changed():
-    if sprite.animation.begins_with("attack") and sprite.frame == 5:
+    if sprite.animation.begins_with("attack") and sprite.frame == 1:
         var bullet = bullet_scene.instance()
         get_parent().add_child(bullet)
         bullet.spawn(position, player.position)
@@ -133,6 +146,7 @@ func _on_animation_frame_changed():
 
 func take_damage(amount: int):
     sprite.play("hurt_" + Direction.get_name(facing_direction))
+    is_charging = false
     health -= amount
     for _i in range(0, 3):
         sprite.visible = false

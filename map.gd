@@ -6,8 +6,8 @@ onready var kitchen_scene = preload("res://kitchen.tscn")
 
 var rng = RandomNumberGenerator.new()
 
-const MAP_WIDTH = 40
-const MAP_HEIGHT = 40
+const MAP_WIDTH = 100
+const MAP_HEIGHT = 100
 var tile_open = []
 
 func _ready():
@@ -63,7 +63,8 @@ func _ready():
 
     for _i in range(0, 1):
         var tomato_spawn_room = null
-        while tomato_spawn_room == null or tomato_spawn_room == player_spawn_room:
+        # while tomato_spawn_room == null or tomato_spawn_room == player_spawn_room:
+        while tomato_spawn_room == null: 
             tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count - 1)]
         var tomato_spawn_coordinate = null
         while tomato_spawn_coordinate == null or is_tile_blocked(tomato_spawn_coordinate) or used_coords.has(tomato_spawn_coordinate):

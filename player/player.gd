@@ -5,6 +5,7 @@ signal turn_finished
 onready var attack_effect_scene = preload("res://effects/effect_player_slash.tscn")
 
 onready var tilemap = get_node("../tilemap")
+onready var fog_of_war = get_node("../fog_of_war_map")
 onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
 
@@ -28,6 +29,7 @@ var power = 3
 func _ready():
     position = coordinate * 32
     tilemap.reserve_tile(coordinate)
+    fog_of_war.update_map(coordinate)
 
     camera.limit_left = int(tilemap.position.x)
     camera.limit_top = int(tilemap.position.y)
@@ -82,6 +84,11 @@ func check_for_inputs():
     if Input.is_action_just_pressed("back"):
         inventory.open(true)
         return
+    if Input.is_action_just_pressed("action"):
+        turn = {
+            "action": "wait"
+        }
+        return
     for name in Direction.NAMES:
         if Input.is_action_pressed(name):
             var future_coord = coordinate + Direction.VECTORS[name]
@@ -112,7 +119,9 @@ func execute_turn():
     if health == 0:
         return
     is_executing_turn = true
-    if turn.action == "move":
+    if turn.action == "wait":
+        end_turn()
+    elif turn.action == "move":
         var future_coord = coordinate + turn.direction
         facing_direction = coordinate.direction_to(future_coord)
         if tilemap.is_tile_free(future_coord):
@@ -142,6 +151,7 @@ func execute_turn():
         end_turn()
 
 func end_turn():
+    fog_of_war.update_map(coordinate)
     is_executing_turn = false
     turn = null
     emit_signal("turn_finished")

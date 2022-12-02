@@ -5,8 +5,6 @@ var rooms = []
 
 func _ready():
     pass
-    # var rng = RandomNumberGenerator.new()
-    # generate(rng, 60, 60, 3)
 
 func generate(rng, width, height, desired_room_count):
     var room_bounds = [

@@ -4,18 +4,16 @@ onready var player_scene = preload("res://player/player.tscn")
 onready var tomato_scene = preload("res://enemies/tomato/tomato.tscn")
 onready var kitchen_scene = preload("res://kitchen.tscn")
 
-var rng = RandomNumberGenerator.new()
+onready var global = get_node("/root/Global")
 
 const MAP_WIDTH = 100
 const MAP_HEIGHT = 100
 var tile_open = []
 
 func _ready():
-    rng.randomize()
-
     var room_count = 3
     var generator = Generator.new()
-    generator.generate(rng, MAP_WIDTH, MAP_HEIGHT, room_count)
+    generator.generate(global.rng, MAP_WIDTH, MAP_HEIGHT, room_count)
 
     for x in range(0, MAP_WIDTH):
         tile_open.append([])
@@ -44,7 +42,7 @@ func _ready():
 
     var used_coords = []
 
-    var player_spawn_room = generator.rooms[rng.randi_range(0, room_count - 1)]
+    var player_spawn_room = generator.rooms[global.rng.randi_range(0, room_count - 1)]
     var player_spawn_coordinate = player_spawn_room.position + (player_spawn_room.size / 2)
     player_spawn_coordinate.x = int(player_spawn_coordinate.x)
     player_spawn_coordinate.y = int(player_spawn_coordinate.y)
@@ -65,11 +63,11 @@ func _ready():
         var tomato_spawn_room = null
         # while tomato_spawn_room == null or tomato_spawn_room == player_spawn_room:
         while tomato_spawn_room == null: 
-            tomato_spawn_room = generator.rooms[rng.randi_range(0, room_count - 1)]
+            tomato_spawn_room = generator.rooms[global.rng.randi_range(0, room_count - 1)]
         var tomato_spawn_coordinate = null
         while tomato_spawn_coordinate == null or is_tile_blocked(tomato_spawn_coordinate) or used_coords.has(tomato_spawn_coordinate):
-            tomato_spawn_coordinate = Vector2(rng.randi_range(tomato_spawn_room.position.x + 1, tomato_spawn_room.position.x + tomato_spawn_room.size.x - 1),
-                                            rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
+            tomato_spawn_coordinate = Vector2(global.rng.randi_range(tomato_spawn_room.position.x + 1, tomato_spawn_room.position.x + tomato_spawn_room.size.x - 1),
+                                            global.rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
         var tomato = tomato_scene.instance()
         tomato.coordinate = tomato_spawn_coordinate
         get_parent().call_deferred("add_child", tomato)

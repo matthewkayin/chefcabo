@@ -5,6 +5,8 @@ signal turn_finished
 onready var attack_effect_scene = preload("res://effects/effect_player_slash.tscn")
 onready var effect_damage_number_scene = preload("res://effects/effect_damage_number.tscn")
 
+onready var global = get_node("/root/Global")
+
 onready var tilemap = get_node("../tilemap")
 onready var fog_of_war = get_node("../fog_of_war_map")
 onready var highlight_map = get_node("../highlight_map")
@@ -25,7 +27,7 @@ var should_interpolate_movement = false
 
 var max_health = 100
 var health = max_health
-var power = 3
+var attack = 3
 
 func _ready():
     position = coordinate * 32
@@ -192,23 +194,24 @@ func _on_animation_frame_changed():
                 effect.spawn(attack_coordinate)
                 yield(effect, "finished")
 
-                yield(enemy.take_damage(power), "completed")
+                yield(enemy.take_damage(global.calculate_damage(self, enemy)), "completed")
                 break
         end_turn()
 
-func take_damage(amount: int):
+func take_damage(result):
     var damage_number = effect_damage_number_scene.instance()
     get_parent().add_child(damage_number)
-    damage_number.spawn(coordinate, amount)
+    damage_number.spawn(coordinate, result)
 
-    health -= amount
-    for _i in range(0, 3):
-        sprite.visible = false
-        timer.start(0.1)
-        yield(timer, "timeout")
-        sprite.visible = true
-        timer.start(0.1)
-        yield(timer, "timeout")
+    if result.value != -1:
+        health -= result.value
+        for _i in range(0, 3):
+            sprite.visible = false
+            timer.start(0.1)
+            yield(timer, "timeout")
+            sprite.visible = true
+            timer.start(0.1)
+            yield(timer, "timeout")
 
     if not damage_number.is_finished:
         yield(damage_number, "finished")

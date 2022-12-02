@@ -6,6 +6,8 @@ onready var item_drop_scene = preload("res://items/item.tscn")
 onready var bullet_scene = preload("res://enemies/tomato/tomato_bullet.tscn")
 onready var effect_damage_number_scene = preload("res://effects/effect_damage_number.tscn")
 
+onready var global = get_node("//root/Global")
+
 onready var player = get_parent().get_node("player")
 onready var tilemap = get_parent().get_node("tilemap")
 
@@ -22,7 +24,7 @@ var should_interpolate_movement = false
 
 var max_health = 10
 var health = max_health
-var power = 3
+var attack = 2
 
 func _ready():
     add_to_group("enemies")
@@ -142,24 +144,25 @@ func _on_animation_frame_changed():
         yield(bullet, "finished")
         bullet.queue_free()
 
-        yield(player.take_damage(power), "completed")
+        yield(player.take_damage(global.calculate_damage(self, player)), "completed")
         end_turn()
 
-func take_damage(amount: int):
+func take_damage(result):
     var damage_number = effect_damage_number_scene.instance()
     get_parent().add_child(damage_number)
-    damage_number.spawn(coordinate, amount)
+    damage_number.spawn(coordinate, result)
 
-    sprite.play("hurt_" + Direction.get_name(facing_direction))
-    is_charging = false
-    health -= amount
-    for _i in range(0, 3):
-        sprite.visible = false
-        timer.start(0.1)
-        yield(timer, "timeout")
-        sprite.visible = true
-        timer.start(0.1)
-        yield(timer, "timeout")
+    if result.value != -1:
+        sprite.play("hurt_" + Direction.get_name(facing_direction))
+        is_charging = false
+        health -= result.value
+        for _i in range(0, 3):
+            sprite.visible = false
+            timer.start(0.1)
+            yield(timer, "timeout")
+            sprite.visible = true
+            timer.start(0.1)
+            yield(timer, "timeout")
 
     if not damage_number.is_finished:
         yield(damage_number, "finished")
@@ -177,4 +180,5 @@ func take_damage(amount: int):
         turn = null
         queue_free()
     else:
-        sprite.play(Direction.get_name(facing_direction))
+        if result.value != -1:
+            sprite.play(Direction.get_name(facing_direction))

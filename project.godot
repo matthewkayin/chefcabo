@@ -35,6 +35,10 @@ _global_script_class_icons={
 config/name="chefcabo"
 config/icon="res://icon.png"
 
+[autoload]
+
+Global="*res://global.gd"
+
 [display]
 
 window/size/width=320

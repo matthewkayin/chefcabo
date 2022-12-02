@@ -4,6 +4,7 @@ signal turn_finished
 
 onready var item_drop_scene = preload("res://items/item.tscn")
 onready var bullet_scene = preload("res://enemies/tomato/tomato_bullet.tscn")
+onready var effect_damage_number_scene = preload("res://effects/effect_damage_number.tscn")
 
 onready var player = get_parent().get_node("player")
 onready var tilemap = get_parent().get_node("tilemap")
@@ -145,6 +146,10 @@ func _on_animation_frame_changed():
         end_turn()
 
 func take_damage(amount: int):
+    var damage_number = effect_damage_number_scene.instance()
+    get_parent().add_child(damage_number)
+    damage_number.spawn(coordinate, amount)
+
     sprite.play("hurt_" + Direction.get_name(facing_direction))
     is_charging = false
     health -= amount
@@ -155,6 +160,11 @@ func take_damage(amount: int):
         sprite.visible = true
         timer.start(0.1)
         yield(timer, "timeout")
+
+    if not damage_number.is_finished:
+        yield(damage_number, "finished")
+    damage_number.queue_free()
+
     if health <= 0:
         sprite.play("death_" + Direction.get_name(facing_direction))
         yield(sprite, "animation_finished")

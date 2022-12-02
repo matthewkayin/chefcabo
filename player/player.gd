@@ -3,6 +3,7 @@ extends Node2D
 signal turn_finished
 
 onready var attack_effect_scene = preload("res://effects/effect_player_slash.tscn")
+onready var effect_damage_number_scene = preload("res://effects/effect_damage_number.tscn")
 
 onready var tilemap = get_node("../tilemap")
 onready var fog_of_war = get_node("../fog_of_war_map")
@@ -196,6 +197,10 @@ func _on_animation_frame_changed():
         end_turn()
 
 func take_damage(amount: int):
+    var damage_number = effect_damage_number_scene.instance()
+    get_parent().add_child(damage_number)
+    damage_number.spawn(coordinate, amount)
+
     health -= amount
     for _i in range(0, 3):
         sprite.visible = false
@@ -204,5 +209,10 @@ func take_damage(amount: int):
         sprite.visible = true
         timer.start(0.1)
         yield(timer, "timeout")
+
+    if not damage_number.is_finished:
+        yield(damage_number, "finished")
+    damage_number.queue_free()
+
     if health <= 0:
         queue_free()

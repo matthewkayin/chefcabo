@@ -6,24 +6,30 @@ onready var kitchen_scene = preload("res://kitchen.tscn")
 
 onready var global = get_node("/root/Global")
 
-const MAP_WIDTH = 100
-const MAP_HEIGHT = 100
+const MAP_WIDTH = 50
+const MAP_HEIGHT = 50
 var tile_open = []
 
 func _ready():
-    var room_count = 3
     var generator = Generator.new()
-    generator.generate(global.rng, MAP_WIDTH, MAP_HEIGHT, room_count)
+    generator.generate_grid(global.rng, MAP_WIDTH, MAP_HEIGHT)
 
     for x in range(0, MAP_WIDTH):
         tile_open.append([])
-        for _y in range(0, MAP_HEIGHT):
+        for y in range(0, MAP_HEIGHT):
             tile_open[x].append(true)
-
-    for room in generator.rooms:
-        for y in range(room.position.y, room.position.y + room.size.y):
-            for x in range(room.position.x, room.position.x + room.size.x):
+            if generator.grid[y][x] == Generator.GeneratorTile.FLOOR:
                 set_cell(x, y, 0)
+            elif generator.grid[y][x] == Generator.GeneratorTile.KITCHEN:
+                set_cell(x, y, 0)
+                var kitchen = kitchen_scene.instance()
+                kitchen.coordinate = Vector2(x, y)
+                get_parent().call_deferred("add_child", kitchen)
+            elif generator.grid[y][x] == Generator.GeneratorTile.PLAYER:
+                set_cell(x, y, 0)
+                var player = player_scene.instance()
+                player.coordinate = Vector2(x, y)
+                get_parent().call_deferred("add_child", player)
 
     var directions = []
     for x in [-1, 0, 1]:
@@ -39,38 +45,6 @@ func _ready():
                 for direction in directions:
                     if get_cellv(current + direction) == -1:
                         set_cellv(current + direction, 2)
-
-    var used_coords = []
-
-    var player_spawn_room = generator.rooms[global.rng.randi_range(0, room_count - 1)]
-    var player_spawn_coordinate = player_spawn_room.position + (player_spawn_room.size / 2)
-    player_spawn_coordinate.x = int(player_spawn_coordinate.x)
-    player_spawn_coordinate.y = int(player_spawn_coordinate.y)
-    var player = player_scene.instance()
-    player.coordinate = player_spawn_coordinate
-    get_parent().call_deferred("add_child", player)
-
-    used_coords.append(player.coordinate)
-
-    var kitchen_spawn_room = generator.rooms[room_count]
-    var kitchen_spawn_coordinate = kitchen_spawn_room.position
-    var kitchen = kitchen_scene.instance()
-    kitchen.coordinate = kitchen_spawn_coordinate
-    get_parent().call_deferred("add_child", kitchen)
-    used_coords.append(kitchen_spawn_coordinate)
-
-    for _i in range(0, 1):
-        var tomato_spawn_room = null
-        # while tomato_spawn_room == null or tomato_spawn_room == player_spawn_room:
-        while tomato_spawn_room == null: 
-            tomato_spawn_room = generator.rooms[global.rng.randi_range(0, room_count - 1)]
-        var tomato_spawn_coordinate = null
-        while tomato_spawn_coordinate == null or is_tile_blocked(tomato_spawn_coordinate) or used_coords.has(tomato_spawn_coordinate):
-            tomato_spawn_coordinate = Vector2(global.rng.randi_range(tomato_spawn_room.position.x + 1, tomato_spawn_room.position.x + tomato_spawn_room.size.x - 1),
-                                            global.rng.randi_range(tomato_spawn_room.position.y + 1, tomato_spawn_room.position.y + tomato_spawn_room.size.y - 1))
-        var tomato = tomato_scene.instance()
-        tomato.coordinate = tomato_spawn_coordinate
-        get_parent().call_deferred("add_child", tomato)
 
 func astar_point_index(point_position: Vector2):
     return (point_position.x * MAP_HEIGHT) + point_position.y

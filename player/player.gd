@@ -8,7 +8,6 @@ onready var effect_damage_number_scene = preload("res://effects/effect_damage_nu
 onready var global = get_node("/root/Global")
 
 onready var tilemap = get_node("../tilemap")
-onready var fog_of_war = get_node("../fog_of_war_map")
 onready var highlight_map = get_node("../highlight_map")
 onready var inventory = get_node("../ui/inventory")
 
@@ -32,7 +31,6 @@ var attack = 3
 func _ready():
     position = coordinate * 32
     tilemap.reserve_tile(coordinate)
-    fog_of_war.update_map(coordinate)
 
     camera.limit_left = int(tilemap.position.x)
     camera.limit_top = int(tilemap.position.y)
@@ -154,7 +152,6 @@ func execute_turn():
         end_turn()
 
 func end_turn():
-    fog_of_war.update_map(coordinate)
     is_executing_turn = false
     turn = null
     emit_signal("turn_finished")

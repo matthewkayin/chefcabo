@@ -278,7 +278,7 @@ script = ExtResource( 2 )
 z_index = 2
 frames = SubResource( 33 )
 animation = "down"
-frame = 6
+frame = 3
 playing = true
 centered = false
 

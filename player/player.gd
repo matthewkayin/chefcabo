@@ -125,12 +125,12 @@ func execute_turn():
     elif turn.action == "move":
         var future_coord = coordinate + turn.direction
         facing_direction = coordinate.direction_to(future_coord)
+        sprite.play(Direction.get_name(facing_direction))
         if tilemap.is_tile_free(future_coord):
             tilemap.free_tile(coordinate)
             tilemap.reserve_tile(future_coord)
             coordinate = future_coord
 
-            sprite.play(Direction.get_name(facing_direction))
             position += position.direction_to(coordinate * 32)
             should_interpolate_movement = true
         else:

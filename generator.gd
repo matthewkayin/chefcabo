@@ -5,27 +5,48 @@ enum GeneratorTile {
     FLOOR = 1,
     STAIRS = 2,
     KITCHEN = 3,
-    PLAYER = 4
+    PLAYER = 4,
+    WALL = 5
 }
 
 const RENDER_SCALE = 2
-const SAFE_ROOM = [
-    [0, 1, 1, 0],
-    [1, 1, 1, 1],
-    [1, 1, 1, 1],
-    [1, 1, 1, 1],
-    [0, 1, 1, 0]
-]
+const SAFE_ROOM_SIZE = Vector2(3, 4)
 
 var width
 var height
 var grid
-var safe_room = []
-var safe_room_walls = []
+var room_points 
+var safe_room_pos
 var render_safe_room = true
+var kitchen_coordinate
+var player_coordinate
 
 func _ready():
     generate_grid(RandomNumberGenerator.new(), 50, 50)
+
+func grid_at(x, y):
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return 0
+    else:
+        return grid[y][x]
+
+func generate_tile_test_grid():
+    width = 50
+    height = 50
+    grid = []
+    for y in range(0, height):
+        grid.append([])
+        for x in range(0, width):
+            if x < 10 or y < 10 or x > 19 or y > 19:
+                grid[y].append(0)
+            elif x == 10 or y == 10 or x == 10 + 10 - 1 or y == 10 + 10 - 1:
+                grid[y].append(GeneratorTile.WALL)
+            else:
+                grid[y].append(GeneratorTile.FLOOR)
+    grid[12][12] = GeneratorTile.PLAYER
+    for x in range(14, 17):
+        for y in range(14, 17):
+            grid[y][x] = GeneratorTile.WALL
 
 func generate_grid(rng, with_width, with_height):
     width = with_width
@@ -36,13 +57,16 @@ func generate_grid(rng, with_width, with_height):
         grid = grid_generate_random(rng)
         for _i in range(0, 5):
             grid = grid_life_step(grid)
+        grid_connect_rooms(rng)
         if not grid_generate_safe_room(rng):
             success = false
             continue
-        grid_connect_rooms(rng)
-        grid_fill_walls()
-        grid[safe_room[0].y][safe_room[0].x + 1] = GeneratorTile.KITCHEN
+        grid_fill_floor()
+        kitchen_coordinate = safe_room_pos
         grid_choose_player_spawn(rng)
+        grid_mark_walls()
+        room_points.pop_front()
+        room_points.pop_front()
         success = true
     return grid
 
@@ -85,13 +109,11 @@ func grid_life_step(old):
     return cells
 
 func grid_connect_rooms(rng):
-    var room_points = [[], []]
+    room_points = [[], []]
     var room_id = 2
     for y in range(0, grid.size()):
         for x in range(0, grid[0].size()):
             if grid[y][x] == 1:
-                if safe_room.has(Vector2(x, y)):
-                    continue
                 var frontier = [Vector2(x, y)]
                 room_points.append([])
                 while not frontier.empty():
@@ -121,44 +143,35 @@ func grid_connect_rooms(rng):
         for point in path:
             grid[point.y][point.x] = room_id
 
-    var nearest = null
-    var nearest_dist = 0
-    var safe_room_center = safe_room[0] + ((Vector2(SAFE_ROOM[0].size(), SAFE_ROOM.size()) * 32) / 2)
-    for y in range(0, grid.size()):
-        for x in range(0, grid[0].size()):
-            if grid[y][x] > 1:
-                if nearest == null:
-                    nearest = Vector2(x, y)
-                    nearest_dist = abs(safe_room_center.x - nearest.x) + abs(safe_room_center.y - nearest.y)
-                else:
-                    var dist = abs(safe_room_center.x - x) + abs(safe_room_center.y - y)
-                    if dist < nearest_dist:
-                        nearest = Vector2(x, y)
-                        nearest_dist = dist
-
-    var safe_room_point = safe_room[rng.randi_range(0, safe_room.size() - 1)]
-    var path = get_astar_path(safe_room_point, nearest, true)
-    for point in path:
-        grid[point.y][point.x] = 1
-
-func grid_fill_walls():
+func grid_fill_floor():
     for y in range(0, grid.size()):
         for x in range(0, grid[0].size()):
             if grid[y][x] > 0:
                 grid[y][x] = GeneratorTile.FLOOR
 
+func grid_mark_walls():
+    for y in range(0, grid.size()):
+        for x in range(0, grid[0].size()):
+            if grid[y][x] == 1:
+                for direction in Direction.EIGHT_DIRECTION_VECTORS:
+                    var point = Vector2(x, y) + direction
+                    if point.x < 0 or point.y < 0 or point.x >= width or point.y >= height:
+                        continue
+                    if grid[point.y][point.x] == 0:
+                        grid[point.y][point.x] = GeneratorTile.WALL
+
 func grid_generate_safe_room(rng):
     var attempts = 0
     while attempts != 15:
-        var top_left = Vector2(
-            rng.randi_range(2, width - 2 - SAFE_ROOM[0].size()), 
-            rng.randi_range(2, height - 2 - SAFE_ROOM.size())
+        safe_room_pos = Vector2(
+            rng.randi_range(2, width - 2 - SAFE_ROOM_SIZE.x), 
+            rng.randi_range(2, height - 2 - SAFE_ROOM_SIZE.y)
         )
 
         var is_valid = true
         # The minus and plus 1 are added to make sure we're not directly touching another room
-        for y in range(top_left.y - 2, top_left.y + SAFE_ROOM.size() + 2):
-            for x in range(top_left.x - 2, top_left.x + SAFE_ROOM[0].size() + 2):
+        for y in range(safe_room_pos.y - 2, safe_room_pos.y + SAFE_ROOM_SIZE.y + 2):
+            for x in range(safe_room_pos.x - 2, safe_room_pos.x + SAFE_ROOM_SIZE.x + 2):
                 if grid[y][x] != 0:
                     is_valid = false
                     break
@@ -169,39 +182,44 @@ func grid_generate_safe_room(rng):
             attempts += 1
             continue
 
-        safe_room = []
-        safe_room_walls = []
-        for y in range(0, SAFE_ROOM.size()):
-            for x in range(0, SAFE_ROOM[0].size()):
-                if SAFE_ROOM[y][x] == 0:
-                    safe_room_walls.append(top_left + Vector2(x, y))
-                    continue
-                if x == 0:
-                    safe_room_walls.append(top_left + Vector2(x - 1, y))
-                if x == SAFE_ROOM[0].size() - 1:
-                    safe_room_walls.append(top_left + Vector2(x + 1, y))
-                if y == 0:
-                    safe_room_walls.append(top_left + Vector2(x, y - 1))
-                if y == SAFE_ROOM.size() - 1:
-                    safe_room_walls.append(top_left + Vector2(x, y + 1))
-                var point = top_left + Vector2(x, y)
+        for y in range(0, SAFE_ROOM_SIZE.y):
+            for x in range(0, SAFE_ROOM_SIZE.x):
+                var point = safe_room_pos + Vector2(x, y)
                 grid[point.y][point.x] = 1
-                safe_room.append(point)
+
+        var nearest = null
+        var nearest_dist = 0
+        var safe_room_center = safe_room_pos + Vector2(1, 2)
+        for y in range(0, grid.size()):
+            for x in range(0, grid[0].size()):
+                if grid[y][x] > 1:
+                    if nearest == null:
+                        nearest = Vector2(x, y)
+                        nearest_dist = abs(safe_room_center.x - nearest.x) + abs(safe_room_center.y - nearest.y)
+                    else:
+                        var dist = abs(safe_room_center.x - x) + abs(safe_room_center.y - y)
+                        if dist < nearest_dist:
+                            nearest = Vector2(x, y)
+                            nearest_dist = dist
+
+        var safe_room_point = safe_room_pos + Vector2(rng.randi_range(0, SAFE_ROOM_SIZE.x - 1), rng.randi_range(0, SAFE_ROOM_SIZE.y - 1))
+        var path = get_astar_path(safe_room_point, nearest)
+        for point in path:
+            grid[point.y][point.x] = 1
 
         return true
     return false
 
 func grid_choose_player_spawn(rng):
     while true:
-        var player_spawn = Vector2(rng.randi_range(0, width - 1), rng.randi_range(0, height - 1))
-        if grid[player_spawn.y][player_spawn.x] == 0:
+        player_coordinate = Vector2(rng.randi_range(0, width - 1), rng.randi_range(0, height - 1))
+        if grid[player_coordinate.y][player_coordinate.x] == 0:
             continue
-        if safe_room.has(player_spawn):
+        if (player_coordinate.x >= safe_room_pos.x and player_coordinate.x <= safe_room_pos.x + SAFE_ROOM_SIZE.x - 1 and player_coordinate.y >= safe_room_pos.y and player_coordinate.y <= safe_room_pos.y + SAFE_ROOM_SIZE.y - 1):
             continue
-        grid[player_spawn.y][player_spawn.x] = GeneratorTile.PLAYER
         return
 
-func get_astar_path(from: Vector2, to: Vector2, allow_safe_room_points = false):
+func get_astar_path(from: Vector2, to: Vector2):
     var frontier = [{ "path": [from], "score": 0 }]
     var explored = []
 
@@ -226,8 +244,6 @@ func get_astar_path(from: Vector2, to: Vector2, allow_safe_room_points = false):
             var new_score = abs(new_pos.x - to.x) + abs(new_pos.y - to.y)
 
             if new_pos.x <= 0 or new_pos.y <= 0 or new_pos.x >= grid[0].size() - 1 or new_pos.y >= grid.size() - 1:
-                continue
-            if not allow_safe_room_points and (safe_room.has(new_pos) or safe_room_walls.has(new_pos)):
                 continue
 
             if explored.has(new_pos):
@@ -260,8 +276,4 @@ func _draw():
         for x in range(0, grid[0].size()):
             if grid[y][x] != 0:
                 var color = Color(1, 1, 1, 1)
-                if safe_room.has(Vector2(x, y)):
-                    if not render_safe_room:
-                        continue
-                    color = Color(0, 1, 0, 1)
                 draw_rect(Rect2(Vector2(x, y) * RENDER_SCALE, Vector2(1, 1) * RENDER_SCALE), color)

@@ -4,7 +4,12 @@ var rng
 
 func _ready():
     rng = RandomNumberGenerator.new()
+    # rng.seed = 809320074667773066
+    # rng.state = 2257944420018308052
+
     rng.randomize()
+    print("seed: ", rng.seed)
+    print("state: ", rng.state)
 
 func calculate_damage(attacker, _defender):
     var hit_value = rng.randf_range(0, 1)

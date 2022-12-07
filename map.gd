@@ -44,7 +44,6 @@ func _ready():
 
     var generator = Generator.new()
     generator.generate_grid(global.rng, MAP_WIDTH, MAP_HEIGHT)
-    # generator.generate_tile_test_grid()
 
     for x in range(0, MAP_WIDTH):
         tile_open.append([])
@@ -153,6 +152,11 @@ func _ready():
     var player = player_scene.instance()
     player.coordinate = generator.player_coordinate
     get_parent().call_deferred("add_child", player)
+    for spawn in generator.enemy_spawns:
+        if spawn.type == generator.Enemy.TOMATO:
+            var tomato_instance = tomato_scene.instance()
+            tomato_instance.coordinate = spawn.coordinate
+            get_parent().call_deferred("add_child", tomato_instance)
 
 func astar_point_index(point_position: Vector2):
     return (point_position.x * MAP_HEIGHT) + point_position.y
@@ -210,12 +214,16 @@ func get_astar_path(from: Vector2, to: Vector2):
             if explored.has(new_pos):
                 continue
             
+            var found_in_frontier = false
             for path in frontier:
                 if path.path[path.path.size() - 1] == new_pos:
                     if new_score < path.score:
                         path.score = new_score
                         path.path = new_path
+                    found_in_frontier = true
                     continue
+            if found_in_frontier:
+                continue
 
             frontier.append({ "path": new_path, "score": new_score })
         

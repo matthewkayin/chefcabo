@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://ui/inventory/inventory.png" type="Texture" id=1]
 [ext_resource path="res://ui/inventory/inventory_highlight.png" type="Texture" id=2]
@@ -10,7 +10,6 @@
 [ext_resource path="res://ui/inventory/cook_button_highlight.png" type="Texture" id=8]
 [ext_resource path="res://ui/inventory/cook_button.png" type="Texture" id=9]
 [ext_resource path="res://ui/inventory/cook_result.png" type="Texture" id=10]
-[ext_resource path="res://ui/inventory/ingredient_sprite.gd" type="Script" id=11]
 [ext_resource path="res://ui/inventory/cooking_pot_bg.png" type="Texture" id=12]
 [ext_resource path="res://ui/inventory/ingredient_sprite.gd" type="Script" id=13]
 
@@ -389,9 +388,9 @@ position = Vector2( 205, 20 )
 scale = Vector2( 2, 2 )
 texture = ExtResource( 7 )
 hframes = 8
-script = ExtResource( 11 )
-FALLING_POS = Vector2( 257, 114 )
-rotation_speed = 150
+script = ExtResource( 13 )
+RISING_POS = Vector2( 220, -12 )
+rotation_speed = 270
 
 [node name="ingredient_2" type="Sprite" parent="ingredients"]
 position = Vector2( 241, 20 )
@@ -399,9 +398,8 @@ scale = Vector2( 2, 2 )
 texture = ExtResource( 7 )
 hframes = 8
 script = ExtResource( 13 )
-RISING_POS = Vector2( 225, -36 )
-FALLING_POS = Vector2( 225, 114 )
-rotation_speed = -90
+RISING_POS = Vector2( 241, -36 )
+rotation_speed = -180
 
 [node name="ingredient_3" type="Sprite" parent="ingredients"]
 position = Vector2( 277, 20 )
@@ -409,15 +407,14 @@ scale = Vector2( 2, 2 )
 texture = ExtResource( 7 )
 hframes = 8
 script = ExtResource( 13 )
-RISING_POS = Vector2( 225, -36 )
-FALLING_POS = Vector2( 209, 114 )
-rotation_speed = -150
+RISING_POS = Vector2( 256, -36 )
+rotation_speed = -270
 
 [node name="pot" type="AnimatedSprite" parent="."]
 position = Vector2( 241, 159 )
 z_index = 2
 frames = SubResource( 10 )
-frame = 2
+frame = 4
 playing = true
 
 [node name="timer" type="Timer" parent="."]

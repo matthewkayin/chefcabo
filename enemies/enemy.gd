@@ -50,6 +50,12 @@ func plan_turn():
             "coordinate": player.coordinate
         }
         is_charging = false
+    elif dist_to_player >= 10:
+        var direction_index = global.rng.randi_range(0, 3)
+        turn = {
+            "action": "move",
+            "coordinate": coordinate + Direction.VECTORS[Direction.NAMES[direction_index]]
+        }
     elif dist_to_player <= 1:
         var direction = Vector2.ZERO
         var dist = 0
@@ -69,9 +75,13 @@ func plan_turn():
             "action": "charge"
         }
     else:
+        var path = tilemap.get_astar_path(coordinate, player.coordinate)
+        var turn_coordinate = coordinate
+        if not path.empty():
+            turn_coordinate = path[1]
         turn = {
             "action": "move",
-            "coordinate": tilemap.get_astar_path(coordinate, player.coordinate)[1]
+            "coordinate": turn_coordinate
         }
 
 func get_turn_target():

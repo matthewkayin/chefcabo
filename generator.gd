@@ -9,6 +9,10 @@ enum GeneratorTile {
     WALL = 5
 }
 
+enum Enemy {
+    TOMATO
+}
+
 const RENDER_SCALE = 2
 const SAFE_ROOM_SIZE = Vector2(3, 4)
 
@@ -20,6 +24,7 @@ var safe_room_pos
 var render_safe_room = true
 var kitchen_coordinate
 var player_coordinate
+var enemy_spawns
 
 func _ready():
     generate_grid(RandomNumberGenerator.new(), 50, 50)
@@ -30,23 +35,41 @@ func grid_at(x, y):
     else:
         return grid[y][x]
 
-func generate_tile_test_grid():
+func generate_enemy_test_grid():
     width = 50
     height = 50
+    var actual_grid = [
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+    ]
     grid = []
     for y in range(0, height):
         grid.append([])
         for x in range(0, width):
-            if x < 10 or y < 10 or x > 19 or y > 19:
+            if x < 10 or y < 10 or x > 14 or y > 14:
                 grid[y].append(0)
-            elif x == 10 or y == 10 or x == 10 + 10 - 1 or y == 10 + 10 - 1:
-                grid[y].append(GeneratorTile.WALL)
             else:
-                grid[y].append(GeneratorTile.FLOOR)
-    grid[12][12] = GeneratorTile.PLAYER
-    for x in range(14, 17):
-        for y in range(14, 17):
-            grid[y][x] = GeneratorTile.WALL
+                var relative_coord = Vector2(x, y) - Vector2(10, 10)
+                if actual_grid[relative_coord.y][relative_coord.x] == 1:
+                    grid[y].append(GeneratorTile.WALL)
+                else:
+                    grid[y].append(GeneratorTile.FLOOR)
+    player_coordinate = Vector2(11, 11)
+    kitchen_coordinate = Vector2(0, 0)
+    safe_room_pos = Vector2(0, 0)
+    enemy_spawns = [
+        {
+            "type": Enemy.TOMATO,
+            "coordinate": Vector2(11, 13)
+        },
+        {
+            "type": Enemy.TOMATO,
+            "coordinate": Vector2(13, 13)
+        }
+    ]
 
 func generate_grid(rng, with_width, with_height):
     width = with_width
@@ -64,6 +87,7 @@ func generate_grid(rng, with_width, with_height):
         grid_fill_floor()
         kitchen_coordinate = safe_room_pos
         grid_choose_player_spawn(rng)
+        grid_choose_enemy_spawns(rng)
         grid_mark_walls()
         room_points.pop_front()
         room_points.pop_front()
@@ -218,6 +242,22 @@ func grid_choose_player_spawn(rng):
         if (player_coordinate.x >= safe_room_pos.x and player_coordinate.x <= safe_room_pos.x + SAFE_ROOM_SIZE.x - 1 and player_coordinate.y >= safe_room_pos.y and player_coordinate.y <= safe_room_pos.y + SAFE_ROOM_SIZE.y - 1):
             continue
         return
+
+func grid_choose_enemy_spawns(rng):
+    var desired_number_of_enemies = 5
+    enemy_spawns = []
+    while enemy_spawns.size() != desired_number_of_enemies:
+        var enemy_coord = Vector2(rng.randi_range(0, width - 1), rng.randi_range(0, height - 1))
+        if grid[enemy_coord.y][enemy_coord.x] == 0:
+            continue
+        if (enemy_coord.x >= safe_room_pos.x and enemy_coord.x <= safe_room_pos.x + SAFE_ROOM_SIZE.x - 1 and enemy_coord.y >= safe_room_pos.y and enemy_coord.y <= safe_room_pos.y + SAFE_ROOM_SIZE.y - 1):
+            continue
+        if abs(player_coordinate.x - enemy_coord.x) + abs(player_coordinate.y - enemy_coord.y) < 10:
+            continue
+        enemy_spawns.append({
+            "type": Enemy.TOMATO,
+            "coordinate": enemy_coord
+        })
 
 func get_astar_path(from: Vector2, to: Vector2):
     var frontier = [{ "path": [from], "score": 0 }]

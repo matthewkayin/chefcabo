@@ -8,7 +8,7 @@
 [ext_resource path="res://highlight_map.gd" type="Script" id=6]
 [ext_resource path="res://game.gd" type="Script" id=7]
 
-[sub_resource type="TileSet" id=3]
+[sub_resource type="TileSet" id=1]
 0/name = "floor_1"
 0/texture = ExtResource( 1 )
 0/tex_offset = Vector2( 0, 0 )
@@ -562,7 +562,7 @@
 script = ExtResource( 7 )
 
 [node name="tilemap" type="TileMap" parent="."]
-tile_set = SubResource( 3 )
+tile_set = SubResource( 1 )
 cell_size = Vector2( 32, 32 )
 format = 1
 script = ExtResource( 3 )

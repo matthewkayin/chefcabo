@@ -15,20 +15,6 @@ func plan_turn():
             "coordinate": player.coordinate
         }
         is_charging = false
-    elif dist_to_player <= 1:
-        var direction = Vector2.ZERO
-        var dist = 0
-        for possible_direction in Direction.VECTORS.values():
-            if not tilemap.is_tile_free(coordinate + possible_direction):
-                continue
-            var possible_dist = tilemap.get_manhatten_distance(coordinate + possible_direction, player.coordinate)
-            if direction == Vector2.ZERO or possible_dist > dist:
-                direction = possible_direction
-                dist = possible_dist
-        turn = {
-            "action": "move",
-            "coordinate": coordinate + direction
-        }
     elif dist_to_player <= 3:
         turn = {
             "action": "charge"
@@ -43,5 +29,4 @@ func attack_impact():
     yield(bullet, "finished")
     bullet.queue_free()
 
-    yield(player.take_damage(global.calculate_damage(self, player)), "completed")
-    end_turn()
+    .attack_impact()

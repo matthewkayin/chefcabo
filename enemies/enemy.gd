@@ -126,7 +126,8 @@ func _on_animation_frame_changed():
         attack_impact()
 
 func attack_impact():
-    pass
+    yield(player.take_damage(global.calculate_damage(self, player)), "completed")
+    end_turn()
 
 func take_damage(result):
     var damage_number = effect_damage_number_scene.instance()

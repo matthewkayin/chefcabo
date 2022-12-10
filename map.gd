@@ -2,6 +2,7 @@ extends TileMap
 
 onready var player_scene = preload("res://player/player.tscn")
 onready var tomato_scene = preload("res://enemies/tomato/tomato.tscn")
+onready var onion_scene = preload("res://enemies/onion/onion.tscn")
 onready var kitchen_scene = preload("res://kitchen.tscn")
 
 onready var global = get_node("/root/Global")
@@ -163,10 +164,13 @@ func init_floor():
     player.coordinate = generator.player_coordinate
     get_parent().call_deferred("add_child", player)
     for spawn in generator.enemy_spawns:
+        var new_enemy
         if spawn.type == generator.Enemy.TOMATO:
-            var tomato_instance = tomato_scene.instance()
-            tomato_instance.coordinate = spawn.coordinate
-            get_parent().call_deferred("add_child", tomato_instance)
+            new_enemy = tomato_scene.instance()
+        elif spawn.type == generator.Enemy.ONION:
+            new_enemy = onion_scene.instance()
+        new_enemy.coordinate = spawn.coordinate
+        get_parent().call_deferred("add_child", new_enemy)
 
 func astar_point_index(point_position: Vector2):
     return (point_position.x * MAP_HEIGHT) + point_position.y

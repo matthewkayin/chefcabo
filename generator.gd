@@ -10,7 +10,8 @@ enum GeneratorTile {
 }
 
 enum Enemy {
-    TOMATO
+    TOMATO,
+    ONION
 }
 
 const RENDER_SCALE = 2

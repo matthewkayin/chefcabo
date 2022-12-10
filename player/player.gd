@@ -77,9 +77,6 @@ var last_pos = position
 func puppet_process():
     if should_interpolate_movement:
         interpolate_movement()
-    var delta_pos = position - last_pos
-    print(delta_pos)
-    last_pos = position
 
 func check_for_inputs():
     if inventory.is_open():

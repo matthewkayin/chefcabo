@@ -31,11 +31,17 @@ enum Tile {
     WALL_INNER_TOP_RIGHT,
     WALL_INNER_TOP_LEFT,
     WALL_INNER_BOT_RIGHT,
-    WALL_INNER_BOT_LEFT
+    WALL_INNER_BOT_LEFT,
+    STAIRS
 }
 var blocked_tiles = []
 
+var safe_room_rect
+
 func _ready():
+    init_floor()
+
+func init_floor():
     blocked_tiles = []
     for key in Tile.keys():
         Tile[key] = tile_set.find_tile_by_name(key.to_lower())
@@ -44,6 +50,8 @@ func _ready():
 
     var generator = Generator.new()
     generator.generate_grid(global.rng, MAP_WIDTH, MAP_HEIGHT)
+
+    safe_room_rect = Rect2(generator.safe_room_pos, generator.SAFE_ROOM_SIZE)
 
     for x in range(0, MAP_WIDTH):
         tile_open.append([])
@@ -146,6 +154,8 @@ func _ready():
                 moss_frontier.append({ "age": next.age + 1, "pos": child_pos, "str": child_str })
         moss_points += 1
 
+    set_cellv(generator.stairs_coordinate, Tile.STAIRS)
+
     var kitchen = kitchen_scene.instance()
     kitchen.coordinate = generator.kitchen_coordinate
     get_parent().call_deferred("add_child", kitchen)
@@ -182,11 +192,17 @@ func get_manhatten_distance(from: Vector2, to: Vector2) -> int:
 func is_in_bounds(point: Vector2) -> bool:
     return not (point.x < 0 or point.y < 0 or point.x >= MAP_WIDTH or point.y >= MAP_HEIGHT)
 
-func get_astar_path(from: Vector2, to: Vector2):
+func get_astar_path(from: Vector2, to: Vector2, limit_iterations = false):
+    var iterations = 0
+
     var frontier = [{ "path": [from], "score": 0 }]
     var explored = []
 
     while frontier.size() != 0:
+        iterations += 1
+        if limit_iterations and iterations == 15:
+            return []
+
         var smallest_index = 0
         for i in range(1, frontier.size()):
             if frontier[i].score < frontier[smallest_index].score:

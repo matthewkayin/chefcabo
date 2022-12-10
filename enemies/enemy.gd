@@ -1,4 +1,5 @@
 extends Node2D
+class_name Enemy
 
 signal turn_finished
 
@@ -15,16 +16,20 @@ onready var tween = $tween
 onready var sprite = $sprite
 onready var timer = $timer
 
+export var max_health = 10
+export var attack = 2
+export var is_melee_attacker = true
+export var attack_impact_frame = 2
+export(Items.Item) var dropped_item
+
+var health = max_health
+
 var turn = null
 var is_executing_turn = false
 var is_charging = false
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.DOWN
 var should_interpolate_movement = false
-
-var max_health = 10
-var health = max_health
-var attack = 2
 
 func _ready():
     add_to_group("enemies")
@@ -43,46 +48,14 @@ func is_done_interpolating():
     return not tween.is_active()
 
 func plan_turn():
-    var dist_to_player = tilemap.get_manhatten_distance(coordinate, player.coordinate)
-    if is_charging: 
-        turn = {
-            "action": "attack",
-            "coordinate": player.coordinate
-        }
-        is_charging = false
-    elif dist_to_player >= 10:
-        var direction_index = global.rng.randi_range(0, 3)
-        turn = {
-            "action": "move",
-            "coordinate": coordinate + Direction.VECTORS[Direction.NAMES[direction_index]]
-        }
-    elif dist_to_player <= 1:
-        var direction = Vector2.ZERO
-        var dist = 0
-        for possible_direction in Direction.VECTORS.values():
-            if not tilemap.is_tile_free(coordinate + possible_direction):
-                continue
-            var possible_dist = tilemap.get_manhatten_distance(coordinate + possible_direction, player.coordinate)
-            if direction == Vector2.ZERO or possible_dist > dist:
-                direction = possible_direction
-                dist = possible_dist
-        turn = {
-            "action": "move",
-            "coordinate": coordinate + direction
-        }
-    elif dist_to_player <= 3:
-        turn = {
-            "action": "charge"
-        }
-    else:
-        var path = tilemap.get_astar_path(coordinate, player.coordinate)
-        var turn_coordinate = coordinate
-        if not path.empty():
-            turn_coordinate = path[1]
-        turn = {
-            "action": "move",
-            "coordinate": turn_coordinate
-        }
+    var path = tilemap.get_astar_path(coordinate, player.coordinate, true)
+    var turn_coordinate = coordinate
+    if not path.empty():
+        turn_coordinate = path[1]
+    turn = {
+        "action": "move",
+        "coordinate": turn_coordinate
+    }
 
 func get_turn_target():
     if turn.action == "attack":
@@ -118,6 +91,8 @@ func execute_turn():
             tilemap.reserve_tile(turn.coordinate)
             coordinate = turn.coordinate
             should_interpolate_movement = true
+        elif is_melee_attacker and turn.coordinate == player.coordinate:
+            sprite.play("attack_" + Direction.get_name(facing_direction))
         else:
             end_turn()
     elif turn.action == "attack":
@@ -147,15 +122,11 @@ func _on_animation_finished():
         sprite.play(Direction.get_name(facing_direction))
 
 func _on_animation_frame_changed():
-    if sprite.animation.begins_with("attack") and sprite.frame == 1:
-        var bullet = bullet_scene.instance()
-        get_parent().add_child(bullet)
-        bullet.spawn(position, player.position)
-        yield(bullet, "finished")
-        bullet.queue_free()
+    if sprite.animation.begins_with("attack") and sprite.frame == attack_impact_frame:
+        attack_impact()
 
-        yield(player.take_damage(global.calculate_damage(self, player)), "completed")
-        end_turn()
+func attack_impact():
+    pass
 
 func take_damage(result):
     var damage_number = effect_damage_number_scene.instance()
@@ -184,7 +155,7 @@ func take_damage(result):
 
         var item_drop = item_drop_scene.instance()
         get_parent().add_child(item_drop)
-        item_drop.spawn(coordinate, Items.Item.TOMATO)
+        item_drop.spawn(coordinate, dropped_item)
 
         tilemap.free_tile(coordinate)
         turn = null

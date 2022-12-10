@@ -24,6 +24,7 @@ var safe_room_pos
 var render_safe_room = true
 var kitchen_coordinate
 var player_coordinate
+var stairs_coordinate
 var enemy_spawns
 
 func _ready():
@@ -86,6 +87,7 @@ func generate_grid(rng, with_width, with_height):
             continue
         grid_fill_floor()
         kitchen_coordinate = safe_room_pos
+        stairs_coordinate = safe_room_pos + Vector2(1, 2)
         grid_choose_player_spawn(rng)
         grid_choose_enemy_spawns(rng)
         grid_mark_walls()

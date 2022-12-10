@@ -48,6 +48,9 @@ func _ready():
     inventory.add_item(Items.Item.TOMATO)
     inventory.add_item(Items.Item.TOMATO)
 
+func is_in_safe_room():
+    return tilemap.safe_room_rect.has_point(coordinate)
+
 func _on_inventory_used_item(item):
     if Items.DATA[item].type == Items.Type.POTION:
         turn = {
@@ -70,7 +73,12 @@ func _on_highlight_map_finished(selected_coordinate):
         "at": selected_coordinate
     }
 
+var last_pos = position
+
 func _process(_delta):
+    var turn_was = turn
+    var should_interpolate_was = should_interpolate_movement
+    var turn_ready_was = is_turn_ready
     if not is_turn_ready:
         if should_interpolate_movement:
             interpolate_movement()
@@ -80,6 +88,10 @@ func _process(_delta):
         return
     if is_turn_ready:
         check_for_inputs()
+    var delta_pos = position - last_pos
+    if Input.is_action_pressed("down") and delta_pos == Vector2.ZERO:
+        print("delta ", delta_pos, " and turn ", turn_was, " and is_turn_ready ", turn_ready_was, " and should interpolate ", should_interpolate_was)
+    last_pos = position
 
 func check_for_inputs():
     if Input.is_action_just_pressed("back"):
@@ -131,7 +143,7 @@ func execute_turn():
             tilemap.reserve_tile(future_coord)
             coordinate = future_coord
 
-            position += position.direction_to(coordinate * 32)
+            position += position.direction_to(coordinate * 32) * 2
             should_interpolate_movement = true
         else:
             for enemy in get_tree().get_nodes_in_group("enemies"):

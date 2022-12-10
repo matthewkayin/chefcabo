@@ -1,12 +1,19 @@
 extends Node2D
 
+onready var tilemap = $tilemap
+onready var fade = $fade
+onready var tween = $tween
+
 var player = null
+var player_health = null
 
 func _process(_delta):
     if player == null:
         player = get_node_or_null("player")
         if player == null:
             return
+        if player_health != null:
+            player.health = player_health
     if player.is_turn_ready and player.turn != null:
         play_turn()
 
@@ -51,4 +58,30 @@ func play_turn():
         if actor.get_ref().turn != null:
             yield(actor.get_ref(), "turn_finished")
 
+    if tilemap.get_cellv(player.coordinate) == tilemap.Tile.STAIRS:
+        start_new_floor()
+        return
+
     player.is_turn_ready = true
+
+func start_new_floor():
+    player_health = player.health
+    player = null
+
+    tween.interpolate_property(fade, "color", Color(0, 0, 0, 0), Color(0, 0, 0, 1), 0.5)
+    tween.start()
+
+    for child in get_children():
+        if ["tilemap", "highlight_map", "ui", "fade", "tween"].has(child.name):
+            continue
+        remove_child(child)
+        child.queue_free()
+
+    if tween.is_active():
+        yield(tween, "tween_all_completed")
+
+    tilemap.init_floor()
+
+    tween.interpolate_property(fade, "color", Color(0, 0, 0, 0), Color(0, 0, 0, 1), 0.5)
+    tween.start()
+    yield(tween, "tween_all_completed")

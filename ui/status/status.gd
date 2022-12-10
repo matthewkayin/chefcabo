@@ -12,5 +12,8 @@ func _process(_delta):
         player = get_node_or_null("../../player")
     if player == null:
         return
+    if not is_instance_valid(player):
+        player = null
+        return
     
     health_label.text = "HP: " + String(player.health) + " / " + String(player.max_health)

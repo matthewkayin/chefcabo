@@ -40,7 +40,7 @@ func _ready():
     sprite.connect("animation_finished", self, "_on_animation_finished")
     sprite.connect("frame_changed", self, "_on_animation_frame_changed")
 
-func _process(_delta):
+func puppet_process():
     if should_interpolate_movement:
         interpolate_movement()
 

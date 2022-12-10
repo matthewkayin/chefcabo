@@ -19,7 +19,6 @@ onready var timer = $timer
 var turn = null
 var is_executing_turn = false
 var pending_thrown_item = null
-var is_turn_ready = true
 var coordinate: Vector2 = Vector2.ZERO
 var facing_direction: Vector2 = Vector2.ZERO
 var should_interpolate_movement = false
@@ -75,25 +74,18 @@ func _on_highlight_map_finished(selected_coordinate):
 
 var last_pos = position
 
-func _process(_delta):
-    var turn_was = turn
-    var should_interpolate_was = should_interpolate_movement
-    var turn_ready_was = is_turn_ready
-    if not is_turn_ready:
-        if should_interpolate_movement:
-            interpolate_movement()
+func puppet_process():
+    if should_interpolate_movement:
+        interpolate_movement()
+    var delta_pos = position - last_pos
+    print(delta_pos)
+    last_pos = position
+
+func check_for_inputs():
     if inventory.is_open():
         return
     if highlight_map.is_open():
         return
-    if is_turn_ready:
-        check_for_inputs()
-    var delta_pos = position - last_pos
-    if Input.is_action_pressed("down") and delta_pos == Vector2.ZERO:
-        print("delta ", delta_pos, " and turn ", turn_was, " and is_turn_ready ", turn_ready_was, " and should interpolate ", should_interpolate_was)
-    last_pos = position
-
-func check_for_inputs():
     if Input.is_action_just_pressed("back"):
         inventory.open(true)
         return

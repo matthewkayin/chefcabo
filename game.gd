@@ -7,6 +7,8 @@ onready var tween = $tween
 var player = null
 var player_health = null
 
+var is_turn_ready = true
+
 func _process(_delta):
     if player == null:
         player = get_node_or_null("player")
@@ -14,12 +16,18 @@ func _process(_delta):
             return
         if player_health != null:
             player.health = player_health
-    if player.is_turn_ready and player.turn != null:
-        play_turn()
+    
+    player.puppet_process()
+    for enemy in get_tree().get_nodes_in_group("enemies"):
+        enemy.puppet_process()
+    
+    if is_turn_ready:
+        player.check_for_inputs()
+        if player.turn != null:
+            is_turn_ready = false
+            play_turn()
 
 func play_turn():
-    player.is_turn_ready = false
-
     var actors = [weakref(player)]
     for enemy in get_tree().get_nodes_in_group("enemies"):
         actors.append(weakref(enemy))
@@ -62,7 +70,7 @@ func play_turn():
         start_new_floor()
         return
 
-    player.is_turn_ready = true
+    is_turn_ready = true
 
 func start_new_floor():
     player_health = player.health

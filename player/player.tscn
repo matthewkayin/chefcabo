@@ -286,7 +286,6 @@ centered = false
 
 [node name="camera" type="Camera2D" parent="."]
 current = true
-smoothing_enabled = true
 smoothing_speed = 10.0
 
 [node name="timer" type="Timer" parent="."]
